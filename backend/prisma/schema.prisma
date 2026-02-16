@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+}
+
+model User {
+  id        String @id @default(uuid())
+  email     String @unique
+  password  String
+  name      String
+  roleId    String
+  role      Role   @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+
+  produce        Produce[]
+  notifications  Notification[]
+  transportAssignments TransportAssignment[]
+}
+
+model StorageLocation {
+  id        String @id @default(uuid())
+  name      String
+  address   String
+  capacity  Float
+  createdAt DateTime @default(now())
+
+  deliveries Delivery[]
+}
+
+model Produce {
+  id          String @id @default(uuid())
+  name        String
+  quantity    Float
+  ownerId     String
+  owner       User @relation(fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+
+  deliveries Delivery[]
+  aiResults  AIResult[]
+}
+
+model Delivery {
+  id          String @id @default(uuid())
+  produceId   String
+  produce     Produce @relation(fields: [produceId], references: [id])
+
+  storageId   String
+  storage     StorageLocation @relation(fields: [storageId], references: [id])
+
+  status      DeliveryStatus
+  createdAt   DateTime @default(now())
+
+  events      DeliveryEvent[]
+  transport   TransportAssignment?
+  aiResults   AIResult[]
+}
+
+model DeliveryEvent {
+  id          String @id @default(uuid())
+  deliveryId  String
+  delivery    Delivery @relation(fields: [deliveryId], references: [id])
+
+  status      DeliveryStatus
+  location    String
+  timestamp   DateTime @default(now())
+}
+
+model Vehicle {
+  id          String @id @default(uuid())
+  plateNumber String @unique
+  capacity    Float
+
+  assignments TransportAssignment[]
+}
+
+model TransportAssignment {
+  id           String @id @default(uuid())
+  deliveryId   String @unique
+  delivery     Delivery @relation(fields: [deliveryId], references: [id])
+
+  transporterId String
+  transporter   User @relation(fields: [transporterId], references: [id])
+
+  vehicleId    String
+  vehicle      Vehicle @relation(fields: [vehicleId], references: [id])
+
+  assignedAt   DateTime @default(now())
+}
+
+model AIResult {
+  id          String @id @default(uuid())
+  type        AIType
+  result      Json
+  produceId   String?
+  produce     Produce? @relation(fields: [produceId], references: [id])
+
+  deliveryId  String?
+  delivery    Delivery? @relation(fields: [deliveryId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+model Notification {
+  id        String @id @default(uuid())
+  userId    String
+  user      User @relation(fields: [userId], references: [id])
+
+  message   String
+  read      Boolean @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum AIType {
+  FRESHNESS
+  ROUTE
+  DISPATCH
+  VEHICLE
+}
+
