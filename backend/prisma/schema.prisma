@@ -40,8 +40,11 @@ model Produce {
   id          String @id @default(uuid())
   name        String
   quantity    Float
-  ownerId     String
-  owner       User @relation(fields: [ownerId], references: [id])
+  farmerId     String
+  harvestDate DateTime?
+  expiryDate  DateTime?
+  unit        String?  // e.g., kg, tons, boxes
+  owner       User @relation(fields: [farmerId], references: [id])
   createdAt   DateTime @default(now())
 
   deliveries Delivery[]
