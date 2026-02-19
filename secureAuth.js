@@ -1,5 +1,17 @@
+require('dotenv').config(); // Load the vault
 const { z } = require('zod');
 const bcrypt = require('bcryptjs');
+
+// Accessing secrets safely from the environment
+const saltRounds = parseInt(process.env.SALT_ROUNDS) || 10;
+
+async function registerUser(userInput) {
+    // ... validation logic stays the same ...
+    const salt = await bcrypt.genSalt(saltRounds); 
+    const hashedPassword = await bcrypt.hash(userInput.password, salt);
+    console.log("Using Salt Rounds from .env:", saltRounds);
+    // ...
+}
 
 // 1. FRONT DOOR: Define the Schema (Zod)
 const userSchema = z.object({
@@ -39,3 +51,5 @@ registerUser({
   password: "SafePassword2026",
   role: "farmer"
 });
+
+
