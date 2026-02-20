@@ -39,6 +39,5 @@ async function loginHandshake(email, inputPassword, storedHash) {
 }
 
 // SIMULATION: In reality, 'storedHash' comes from your database
-const mockHash = "$2b$10$ZFQlakMptBtm16hJe0ovOunbPzRz4O4mmATKk7rnxDhJV1T4xFje6"; 
-loginHandshake("farmer@umoja.com", "GreenFields2026!", "$2b$10$ZFQlakMptBtm16hJe0ovOunbPzRz4O4mmATKk7rnxDhJV1T4xFje6");
-
+const mockHash = "$2b$10$9wdm49yqvzccc6QLQYG8L.QBkdwBC8x7KC40DS3HisgMazFO6amOC"; 
+loginHandshake("farmer_joy@umoja.com", "GreenFields2026!", "$2b$10$9wdm49yqvzccc6QLQYG8L.QBkdwBC8x7KC40DS3HisgMazFO6amOC");
