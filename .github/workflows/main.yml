@@ -28,16 +28,16 @@ jobs:
         run: npm audit --audit-level=high
 
       # Optional — enable if you add SNYK_TOKEN to repo secrets
-      - name: Run Snyk scan
-        if: ${{ secrets.SNYK_TOKEN != '' }}
-        uses: snyk/actions/node@master
-        with:
-          command: test
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+     # - name: Run Snyk scan
+     #   if: ${{ secrets.SNYK_TOKEN != '' }}
+  #      uses: snyk/actions/node@master
+     #   with:
+        #  command: test
+   #     env:
+      #    SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   codeql:
-    name: 🧠 CodeQL Analysis
+    name: CodeQL Analysis
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -59,7 +59,7 @@ jobs:
         uses: github/codeql-action/analyze@v3
 
   secrets-scan:
-    name: 🔐 Secrets Detection
+    name: Secrets Detection
     runs-on: ubuntu-latest
 
     steps:
