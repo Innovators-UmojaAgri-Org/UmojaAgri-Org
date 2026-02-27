@@ -21,9 +21,12 @@ async function getDeliveryById(req, res) {
 
 async function updateDeliveryStatus(req, res) {
   try {
+    const io = req.app.get("io"); // get socket instance
     const delivery = await deliveryService.updateDeliveryStatus(
       req.params.id,
       req.body.status,
+      req.body.location,
+      io
     );
     res.json(delivery);
   } catch (err) {
