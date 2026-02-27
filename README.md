@@ -1,6 +1,4 @@
 # UmojaAgri-Org
-Here’s a **comprehensive, production-style README** tailored to your UmojaAgri project and aligned with your MVP brief.
-You can paste this directly into your repo’s `README.md`.
 
 ---
 
@@ -132,7 +130,7 @@ The schema enables full lifecycle tracking of produce from harvest through deliv
 
 ---
 
-# ⚙️ How It Works
+#  How It Works
 
 1️⃣ User enters crop, harvest time, and destination
 2️⃣ System calculates travel time using rule-based logic
@@ -141,29 +139,29 @@ The schema enables full lifecycle tracking of produce from harvest through deliv
 
 ---
 
-# 🧪 Local Development Setup
+# Local Development Setup
 
-## 1️⃣ Clone repository
+## 1️ Clone repository
 
 ```bash
 git clone https://github.com/Innovators-UmojaAgri-Org/UmojaAgri-Org.git
 cd UmojaAgri-Org
 ```
 
-## 2️⃣ Switch to dev branch
+## 2️ Switch to dev branch
 
 ```bash
 git checkout dev
 ```
 
-## 3️⃣ Install dependencies
+## 3️ Install dependencies
 
 ```bash
 cd backend
 npm install
 ```
 
-## 4️⃣ Configure environment variables
+## 4️ Configure environment variables
 
 Create `.env`:
 
@@ -172,14 +170,14 @@ DATABASE_URL=your_postgres_connection_string
 PORT=5000
 ```
 
-## 5️⃣ Run Prisma
+## 5️ Run Prisma
 
 ```bash
 npx prisma generate
 npx prisma migrate dev
 ```
 
-## 6️⃣ Start server
+## 6️ Start server
 
 ```bash
 npm run dev
@@ -187,7 +185,7 @@ npm run dev
 
 ---
 
-# 🚀 Deployment
+#  Deployment
 
 The backend is deployed on **Render** with CI/CD automation via GitHub Actions.
 
@@ -199,7 +197,7 @@ The backend is deployed on **Render** with CI/CD automation via GitHub Actions.
 
 ---
 
-# 🔐 Security & DevSecOps
+#  Security & DevSecOps
 
 The project integrates:
 
@@ -210,9 +208,9 @@ The project integrates:
 
 ---
 
-# 📊 Project Status
+#  Project Status
 
-🟡 MVP in active development
+ MVP in active development
 
 Current focus:
 
