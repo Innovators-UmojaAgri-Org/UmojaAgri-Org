@@ -38,6 +38,3 @@ app.get("/health", (req, res) => {
 });
 
 module.exports = app;
-```
-
-Just replace your current `app.js` with this. The only thing added is the `app.get("/")` route at the top — everything else is identical to what you had. Push to your `dev` branch and Render will auto-deploy.
