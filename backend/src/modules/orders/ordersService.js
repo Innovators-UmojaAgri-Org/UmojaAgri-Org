@@ -29,8 +29,9 @@ async function getOrdersForFarmer(farmerId) {
 
 // Farmer approves or rejects
 async function updateOrderStatus(orderId, status) {
-  if (!["APPROVED", "REJECTED"].includes(status))
+  if (!["CONFIRMED", "REJECTED"].includes(status)) {
     throw new Error("Invalid status");
+  }
 
   const order = await prisma.order.update({
     where: { id: orderId },
@@ -38,13 +39,21 @@ async function updateOrderStatus(orderId, status) {
     include: { produce: true },
   });
 
-  // If approved, create delivery
-  if (status === "APPROVED") {
-    const delivery = await deliveriesService.createDelivery({
-      produceId: order.produceId,
-      sellerId: order.sellerId,
-      quantity: order.quantity,
-      storageId: order.storageId || "DEFAULT_STORAGE_ID", 
+  if (status === "CONFIRMED") {
+    // Get real storage from DB
+    const storage = await prisma.storageLocation.findFirst();
+
+    if (!storage) {
+      throw new Error("No storage location available");
+    }
+
+    // Create delivery directly (skip fake storageId)
+    const delivery = await prisma.delivery.create({
+      data: {
+        produceId: order.produceId,
+        storageId: storage.id,
+        status: "PENDING",
+      },
     });
 
     // Link delivery to order
