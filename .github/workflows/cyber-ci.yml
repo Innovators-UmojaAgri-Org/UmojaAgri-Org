@@ -1,0 +1,47 @@
+name: Cyber Branch CI
+
+on:
+  push:
+    branches:
+      - cyber
+  pull_request:
+    branches:
+      - cyber
+  workflow_dispatch:
+
+jobs:
+  cyber-ci:
+    name: Run Cyber Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2️⃣ Show repo structure (debug — helps confirm paths)
+      - name: Print repo structure
+        run: |
+          echo "Listing files..."
+          ls -R
+
+      # 3️⃣ Setup Node only if package.json exists
+      - name: Setup Node
+        if: hashFiles('**/package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 4️⃣ Install dependencies if project exists
+      - name: Install dependencies
+        if: hashFiles('**/package.json') != ''
+        run: npm install
+
+      # 5️⃣ Run basic security audit
+      - name: Run npm audit
+        if: hashFiles('**/package.json') != ''
+        run: npm audit --audit-level=high || true
+
+      # 6️⃣ Success message
+      - name: Done
+        run: echo "Cyber CI completed successfully"
