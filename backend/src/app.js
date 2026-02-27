@@ -1,6 +1,3 @@
-Here's your corrected `app.js`:
-
-```js
 const express = require("express");
 const cors = require("cors");
 const userRoutes = require("./modules/users/usersRoutes");
