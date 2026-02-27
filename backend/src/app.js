@@ -14,10 +14,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Root route ✅
+// Root route 
 app.get("/", (req, res) => {
   res.json({
-    message: "UmojaAgri API is running 🌱",
+    message: "UmojaAgri API is running ",
     status: "healthy",
     version: "1.0.0",
     endpoints: {
