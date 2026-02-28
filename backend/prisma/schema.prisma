@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Role {
@@ -24,9 +26,8 @@ model User {
   produce              Produce[]
   notifications        Notification[]
   transportAssignments TransportAssignment[]
-
-  sellerOrders Order[] @relation("SellerOrders")
-  farmerOrders Order[] @relation("FarmerOrders")
+  sellerOrders         Order[]              @relation("SellerOrders")
+  farmerOrders         Order[]              @relation("FarmerOrders")
 }
 
 model StorageLocation {
@@ -46,42 +47,37 @@ model Produce {
   farmerId    String
   harvestDate DateTime?
   expiryDate  DateTime?
-  unit        String? // e.g., kg, tons, boxes
+  unit        String?
   owner       User      @relation(fields: [farmerId], references: [id])
   createdAt   DateTime  @default(now())
 
   deliveries Delivery[]
   aiResults  AIResult[]
-
-  orders Order[] @relation("ProduceOrders") // back-relation for Order
+  orders     Order[]    @relation("ProduceOrders")
 }
 
 model Delivery {
-  id        String  @id @default(uuid())
+  id        String          @id @default(uuid())
   produceId String
-  produce   Produce @relation(fields: [produceId], references: [id])
-
+  produce   Produce         @relation(fields: [produceId], references: [id])
   storageId String
   storage   StorageLocation @relation(fields: [storageId], references: [id])
-
   status    DeliveryStatus
-  createdAt DateTime       @default(now())
+  createdAt DateTime        @default(now())
 
   events    DeliveryEvent[]
   transport TransportAssignment?
   aiResults AIResult[]
-
-  order Order? @relation("OrderDelivery") // back-relation for Order
+  order     Order?           @relation("OrderDelivery")
 }
 
 model DeliveryEvent {
-  id         String   @id @default(uuid())
+  id         String         @id @default(uuid())
   deliveryId String
-  delivery   Delivery @relation(fields: [deliveryId], references: [id])
-
-  status    DeliveryStatus
-  location  String
-  timestamp DateTime       @default(now())
+  delivery   Delivery       @relation(fields: [deliveryId], references: [id])
+  status     DeliveryStatus
+  location   String
+  timestamp  DateTime       @default(now())
 }
 
 model Vehicle {
@@ -93,61 +89,51 @@ model Vehicle {
 }
 
 model TransportAssignment {
-  id         String   @id @default(uuid())
-  deliveryId String   @unique
-  delivery   Delivery @relation(fields: [deliveryId], references: [id])
-
+  id            String   @id @default(uuid())
+  deliveryId    String   @unique
+  delivery      Delivery @relation(fields: [deliveryId], references: [id])
   transporterId String
-  transporter   User   @relation(fields: [transporterId], references: [id])
-
-  vehicleId String
-  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
-
-  assignedAt DateTime @default(now())
+  transporter   User     @relation(fields: [transporterId], references: [id])
+  vehicleId     String
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id])
+  assignedAt    DateTime @default(now())
 }
 
 model AIResult {
-  id        String   @id @default(uuid())
-  type      AIType
-  result    Json
-  produceId String?
-  produce   Produce? @relation(fields: [produceId], references: [id])
-
+  id         String    @id @default(uuid())
+  type       AIType
+  result     Json
+  produceId  String?
+  produce    Produce?  @relation(fields: [produceId], references: [id])
   deliveryId String?
   delivery   Delivery? @relation(fields: [deliveryId], references: [id])
-
-  createdAt DateTime @default(now())
+  createdAt  DateTime  @default(now())
 }
 
 model Notification {
-  id     String @id @default(uuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   message   String
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
 model Order {
-  id        String  @id @default(uuid())
-  produceId String
-  produce   Produce @relation(fields: [produceId], references: [id], name: "ProduceOrders")
-
-  sellerId String
-  seller   User   @relation("SellerOrders", fields: [sellerId], references: [id])
-
-  farmerId String
-  farmer   User   @relation("FarmerOrders", fields: [farmerId], references: [id])
-
-  quantity  Float
-  unit      String
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-
-  delivery   Delivery? @relation(fields: [deliveryId], references: [id], name: "OrderDelivery")
-  deliveryId String?   @unique
+  id         String      @id @default(uuid())
+  produceId  String
+  produce    Produce     @relation(fields: [produceId], references: [id], name: "ProduceOrders")
+  sellerId   String
+  seller     User        @relation("SellerOrders", fields: [sellerId], references: [id])
+  farmerId   String
+  farmer     User        @relation("FarmerOrders", fields: [farmerId], references: [id])
+  quantity   Float
+  unit       String
+  status     OrderStatus @default(PENDING)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  deliveryId String?     @unique
+  delivery   Delivery?   @relation(fields: [deliveryId], references: [id], name: "OrderDelivery")
 }
 
 enum DeliveryStatus {
