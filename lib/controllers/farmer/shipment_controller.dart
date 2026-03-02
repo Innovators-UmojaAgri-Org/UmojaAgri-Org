@@ -1,112 +1,59 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import '../../models/farmer/shipment_model.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:umoja_agri/models/farmer/shipment_model.dart';
+import 'package:umoja_agri/services/delivery_service.dart';
 
 class ShipmentController extends GetxController {
   var isLoading = false.obs;
   var selectedFilter = "All".obs;
-
   final shipments = <ShipmentModel>[].obs;
+  final _box = GetStorage();
 
   @override
   void onInit() {
     super.onInit();
-    loadMockShipments();
+    loadShipments();
   }
 
-  void loadMockShipments() async {
+  void loadShipments() async {
     isLoading.value = true;
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    shipments.value = [
-      ShipmentModel(
-        id: "SH-2403",
-        product: "Cassava",
-        bags: 200,
-        status: "Pending",
-        destination: "Port Harcourt",
-        departureDate: "Feb 18, 2026",
-        arrivalDate: "Feb 20, 2026",
-        distanceKm: 420,
-        needsTransport: true,
-        driverName: "Not Assigned",
-        recommendedVehicle: "Ventilated Vehicle",
-        vehicleReasons: [
-          "Root vegetables need ventilation",
-          "Medium storage duration (2 days)",
-        ],
-      ),
-      ShipmentModel(
-        id: "SH-2403",
-        product: "Cassava",
-        bags: 300,
-        status: "In Transit",
-        destination: "Port Harcourt",
-        departureDate: "Feb 18, 2026",
-        arrivalDate: "Feb 20, 2026",
-        distanceKm: 420,
-        needsTransport: false,
-        driverName: "Ahmed Musa",
-        recommendedVehicle: "Ventilated Truck",
-        vehicleReasons: [
-          "Root vegetables need ventilation",
-          "Medium storage duration (2 days)",
-        ],
-      ),
-      ShipmentModel(
-        id: "SH-2402",
-        product: "Rice",
-        bags: 300,
-        status: "Delivered",
-        destination: "Port Harcourt",
-        departureDate: "Feb 18, 2026",
-        arrivalDate: "Feb 20, 2026",
-        distanceKm: 280,
-        needsTransport: false,
-        driverName: "Mary Eze",
-        recommendedVehicle: "Standard Vehicle",
-        vehicleReasons: [
-          "Packaged grain, minimal special handling",
-          "Short duration (1 day)",
-        ],
-      ),
-      ShipmentModel(
-        id: "SH-2404",
-        product: "Tomatoes",
-        bags: 20,
-        status: "Pending",
-        destination: "Kano",
-        departureDate: "Feb 20, 2026",
-        arrivalDate: "Feb 22, 2026",
-        distanceKm: 610,
-        needsTransport: true,
-        driverName: "Not Assigned",
-        recommendedVehicle: "Refrigerated Vehicle",
-        vehicleReasons: [
-          "Perishable item requiring cold chain",
-          "Long distance delivery (610 km)",
-        ],
-      ),
-    ];
-
-    isLoading.value = false;
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await DeliveryService().getDeliveries(token);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as List;
+        shipments.value = data.map((d) => ShipmentModel(
+          id: d['id'],
+          product: d['produce']?['name'] ?? 'Unknown',
+          bags: (d['produce']?['quantity'] ?? 0).toInt(),
+          status: d['status'],
+          destination: d['storage']?['address'] ?? 'Unknown',
+          departureDate: d['createdAt']?.toString().substring(0, 10) ?? '',
+          arrivalDate: '',
+          distanceKm: 0,
+          needsTransport: d['transport'] == null,
+          driverName: d['transport']?['transporter']?['name'] ?? 'Not Assigned',
+          recommendedVehicle: '',
+          vehicleReasons: [],
+        )).toList();
+      }
+    } catch (e) {
+      // fail silently
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   List<ShipmentModel> get filteredShipments {
     if (selectedFilter.value == "Needs") {
       return shipments.where((s) => s.needsTransport).toList();
     }
-    return shipments;
+    return shipments.toList();
   }
 
-  int get inTransitCount =>
-      shipments.where((s) => s.status == "In Transit").length;
-
-  int get deliveredCount =>
-      shipments.where((s) => s.status == "Delivered").length;
-
-  int get pendingCount => shipments.where((s) => s.status == "Pending").length;
-
-  int get needsTransportCount =>
-      shipments.where((s) => s.needsTransport).length;
+  int get inTransitCount => shipments.where((s) => s.status == "IN_TRANSIT").length;
+  int get deliveredCount => shipments.where((s) => s.status == "DELIVERED").length;
+  int get pendingCount => shipments.where((s) => s.status == "PENDING").length;
+  int get needsTransportCount => shipments.where((s) => s.needsTransport).length;
 }

@@ -1,10 +1,15 @@
+import 'dart:convert';
 import 'package:get/get.dart';
-import '../../models/farmer/dashboard_model.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:umoja_agri/models/farmer/dashboard_model.dart';
+import 'package:umoja_agri/services/produce_service.dart';
+import 'package:umoja_agri/services/order_service.dart';
 
 class DashboardController extends GetxController {
   var isLoading = true.obs;
   var hasError = false.obs;
   var dashboardData = Rxn<DashboardStatsModel>();
+  final _box = GetStorage();
   late Future<void> _initializationFuture;
 
   @override
@@ -21,26 +26,26 @@ class DashboardController extends GetxController {
     try {
       isLoading(true);
       hasError(false);
+      final token = _box.read('token') ?? '';
 
-      // Simulate API delay 
-      await Future.delayed(const Duration(milliseconds: 800));
+      final produceRes = await ProduceService().getAllProduce(token);
+      final ordersRes = await OrderService().getOrders(token);
 
-      /// Mock backend JSON response
-      final mockJson = {
-        "farmerName": "Shola Adebayo",
-        "monthlyRevenue": 280836.00,
-        "newOrders": 12,
-        "totalCrops": 8,
-        "weeklyYield": [
-          {"day": "Mon", "value": 16},
-          {"day": "Tue", "value": 22},
-          {"day": "Wed", "value": 27},
-          {"day": "Thu", "value": 45},
-          {"day": "Fri", "value": 33},
-        ],
-      };
+      if (produceRes.statusCode == 200 && ordersRes.statusCode == 200) {
+        final produces = jsonDecode(produceRes.body) as List;
+        final orders = jsonDecode(ordersRes.body) as List;
+        final newOrders = orders.where((o) => o['status'] == 'PENDING').length;
 
-      dashboardData.value = DashboardStatsModel.fromJson(mockJson);
+        dashboardData.value = DashboardStatsModel.fromJson({
+          "farmerName": _box.read('name') ?? 'Farmer',
+          "monthlyRevenue": 0.0,
+          "newOrders": newOrders,
+          "totalCrops": produces.length,
+          "weeklyYield": [],
+        });
+      } else {
+        hasError(true);
+      }
     } catch (e) {
       hasError(true);
     } finally {
@@ -48,7 +53,5 @@ class DashboardController extends GetxController {
     }
   }
 
-  void refreshDashboard() {
-    fetchDashboardData();
-  }
+  void refreshDashboard() => fetchDashboardData();
 }
