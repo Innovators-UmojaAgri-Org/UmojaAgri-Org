@@ -88,7 +88,18 @@ class TransporterController extends GetxController {
   }
 
   void selectTab(int index) => selectedTabIndex.value = index;
-
+String statusToString(ShipmentStatus status) {
+  switch (status) {
+    case ShipmentStatus.pending:
+      return 'At Farm';
+    case ShipmentStatus.inTransit:
+      return 'In Transit';
+    case ShipmentStatus.delivered:
+      return 'At the Market';
+    case ShipmentStatus.cancelled:
+      return 'Cancelled';
+  }
+}
   ShipmentStatus _parseStatus(String status) {
     switch (status) {
       case 'IN_TRANSIT': return ShipmentStatus.inTransit;

@@ -346,29 +346,33 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  Color _getStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return AppTheme.pending;
-      case OrderStatus.confirmed:
-        return AppTheme.confirmed;
-      case OrderStatus.inTransit:
-        return AppTheme.inTransit;
-      case OrderStatus.delivered:
-        return AppTheme.delivered;
-    }
+Color _getStatusColor(OrderStatus status) {
+  switch (status) {
+    case OrderStatus.pending:
+      return AppTheme.pending;
+    case OrderStatus.confirmed:
+      return AppTheme.confirmed;
+    case OrderStatus.inTransit:
+      return AppTheme.inTransit;
+    case OrderStatus.delivered:
+      return AppTheme.delivered;
+    case OrderStatus.cancelled:
+      return Colors.grey;
   }
-
+}
   String _getStatusLabel(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'Pending';
-      case OrderStatus.confirmed:
-        return 'Confirmed';
-      case OrderStatus.inTransit:
-        return 'In Transit';
-      case OrderStatus.delivered:
-        return 'Delivered';
-    }
+  switch (status) {
+    case OrderStatus.pending:
+      return 'Pending';
+    case OrderStatus.confirmed:
+      return 'Confirmed';
+    case OrderStatus.inTransit:
+      return 'In Transit';
+    case OrderStatus.delivered:
+      return 'Delivered';
+    case OrderStatus.cancelled:
+      return 'Cancelled';
   }
+} 
+
 }

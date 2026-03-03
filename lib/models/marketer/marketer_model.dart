@@ -22,7 +22,7 @@ class Order {
   });
 }
 
-enum OrderStatus { pending, confirmed, inTransit, delivered }
+enum OrderStatus { pending, confirmed, inTransit, delivered, cancelled }
 
 class FarmProduce {
   final String name;
