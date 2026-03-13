@@ -109,9 +109,58 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
   return delivery;
 }
 
+async function getIncomingDeliveries(sellerId) {
+  return prisma.delivery.findMany({
+    where: {
+      order: {
+        sellerId: sellerId,
+      },
+    },
+
+    include: {
+      produce: {
+        select: {
+          name: true,
+        },
+      },
+
+      order: {
+        select: {
+          id: true,
+          quantity: true,
+          unit: true,
+          farmer: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+            },
+          },
+        },
+      },
+
+      transport: {
+        include: {
+          transporter: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+}
+
 module.exports = {
   createDelivery,
   getDeliveries,
   getDeliveryById,
   updateDeliveryStatus,
+  getIncomingDeliveries,
 };

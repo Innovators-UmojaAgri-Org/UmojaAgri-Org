@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { registerUser, findUserByEmail } = require("./usersService");
+const { registerUser, findUserByEmail, getUserProfile, updateUserProfile } = require("./usersService");
 const { generateToken } = require("../../shared/utils/jwt");
 
 async function register(req, res) {
@@ -33,4 +33,23 @@ async function login(req, res) {
   }
 }
 
-module.exports = { register, login };
+async function getProfile(req, res) {
+  try {
+    const user = await getUserProfile(req.user.userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function updateProfile(req, res) {
+  try {
+    const user = await updateUserProfile(req.user.userId, req.body);
+    res.json({ success: true, data: user });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+module.exports = { register, login, getProfile, updateProfile };

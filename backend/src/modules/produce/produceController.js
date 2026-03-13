@@ -4,6 +4,7 @@ const {
   updateProduce,
   deleteProduce,
   getAllProduces,
+  getMarketplaceProduces
 } = require("./produceService");
 
 async function addProduce(req, res) {
@@ -60,10 +61,25 @@ async function listAllProduces(req, res) {
   }
 }
 
+async function listMarketplaceProduces(req, res) {
+  try {
+    const produces = await getMarketplaceProduces();
+
+    res.json({
+      success: true,
+      count: produces.length,
+      data: produces,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   addProduce,
   listMyProduces,
   editProduce,
   removeProduce,
   listAllProduces,
+  listMarketplaceProduces,
 };

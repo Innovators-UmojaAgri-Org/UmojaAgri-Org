@@ -34,9 +34,25 @@ async function updateDeliveryStatus(req, res) {
   }
 }
 
+async function listIncomingDeliveries(req, res) {
+  try {
+    const deliveries = await deliveryService.getIncomingDeliveries(req.user.userId);
+
+    res.json({
+      success: true,
+      count: deliveries.length,
+      data: deliveries,
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   createDelivery,
   getDeliveries,
   getDeliveryById,
   updateDeliveryStatus,
+  listIncomingDeliveries,
 };

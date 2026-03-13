@@ -44,9 +44,35 @@ async function getOrder(req, res) {
   }
 }
 
+async function listSellerOrders(req, res) {
+  try {
+    const orders = await orderService.getOrdersBySeller(req.user.userId);
+
+    res.json({
+      success: true,
+      count: orders.length,
+      data: orders,
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function getSellerOrderSummary(req, res) {
+  try {
+    const summary = await orderService.getOrderSummary(req.user.userId);
+    res.json({ success: true, data: summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 module.exports = {
   placeOrder,
   listOrdersForFarmer,
   approveOrRejectOrder,
   getOrder,
+  listSellerOrders,
+  getSellerOrderSummary,
 };
