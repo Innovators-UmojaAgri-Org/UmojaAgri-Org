@@ -1,18 +1,28 @@
 const prisma = require("../../config/prisma");
 
 async function createDelivery({ produceId, sellerId, quantity, storageId }) {
-  // 1. Fetch produce
   const produce = await prisma.produce.findUnique({ where: { id: produceId } });
   if (!produce) throw new Error("Produce not found");
 
-  // 2. Validate quantity
+  // Validate quantity
   if (produce.quantity < quantity) throw new Error("Insufficient quantity");
 
-  // 3. Transaction: reduce produce quantity + create delivery
+  // Transaction: reduce produce quantity + create delivery
   const result = await prisma.$transaction(async (tx) => {
-    const updatedProduce = await tx.produce.update({
+
+    // const updatedProduce = await tx.produce.update({
+    //   where: { id: produceId },
+    //   data: { quantity: produce.quantity - quantity },
+    // });
+
+    // To handle concurrent orders, used decrement operator
+    await tx.produce.update({ 
       where: { id: produceId },
-      data: { quantity: produce.quantity - quantity },
+      data: {
+        quantity: {
+          decrement: quantity,
+        },
+      },
     });
 
     const delivery = await tx.delivery.create({
@@ -43,7 +53,7 @@ async function getDeliveryById(id) {
 }
 
 async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) {
-  // 1. Update delivery
+  // Update delivery
   const delivery = await prisma.delivery.update({
     where: { id },
     data: { status },
@@ -59,7 +69,7 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
     },
   });
 
-  // 3. Sync order status
+  // Sync order status
   if (delivery.order) {
     let orderStatus;
     switch (status) {
@@ -76,7 +86,7 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
         orderStatus = "CANCELLED";
         break;
       default:
-        orderStatus = delivery.order.status; // keep as-is
+        orderStatus = delivery.order.status; 
     }
 
     if (orderStatus !== delivery.order.status) {
@@ -85,7 +95,7 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
         data: { status: orderStatus },
       });
 
-      // Optional: notify seller via socket.io
+      // notify seller via socket.io
       if (io) {
         io.to(delivery.order.sellerId).emit("orderStatusUpdated", {
           orderId: delivery.order.id,
@@ -96,7 +106,7 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
     }
   }
 
-  // 4. Emit delivery update via socket.io
+  // Emit delivery update via socket.io
   if (io) {
     io.to(id).emit("deliveryStatusUpdated", {
       deliveryId: id,

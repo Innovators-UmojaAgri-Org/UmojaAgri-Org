@@ -16,7 +16,7 @@ async function login(req, res) {
     const user = await findUserByEmail(req.body.email);
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "User is not registered. Please sign up first" });
     }
 
     const valid = await bcrypt.compare(req.body.password, user.password);

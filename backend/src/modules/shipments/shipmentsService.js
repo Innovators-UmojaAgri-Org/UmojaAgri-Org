@@ -116,7 +116,7 @@ async function selectTransporter(shipmentId, transporterId) {
 }
 
 async function getRecommendedTransporter(shipmentId) {
-  // Find transporter with highest rating
+  // Find transporter with highest rating and recommend based on that just for now 
   const transporter = await prisma.transporterProfile.findFirst({
     orderBy: { rating: "desc" },
     include: {

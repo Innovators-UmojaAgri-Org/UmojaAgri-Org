@@ -107,6 +107,7 @@ async function getDriverPerformance(userId) {
   };
 }
 
+// For now we only have one setting (dynamic routing) but in future we can expand this to include more driver preferences and settings (e.g. preferred routes, max load, etc.)
 async function updateDriverSettings(userId, settings) {
   return prisma.driverProfile.update({
     where: { userId },

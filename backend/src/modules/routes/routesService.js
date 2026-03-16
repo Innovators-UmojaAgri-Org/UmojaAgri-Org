@@ -65,6 +65,7 @@ async function acceptRoute(shipmentId, routeId) {
   });
 }
 
+// for MVP we mannually create routes, in future we can integrate with external routing APIs (Google Maps) to generate routes based on origin/destination and other parameters
 async function createRoute({ origin, destination, distanceKm, estimatedTimeMinutes, riskLevel, fuelCost, tollCost, stops }) {
   return prisma.route.create({
     data: {

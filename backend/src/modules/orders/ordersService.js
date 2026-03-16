@@ -65,7 +65,6 @@ async function updateOrderStatus(orderId, status) {
       throw new Error("No storage location available");
     }
 
-    // Create delivery directly (skip fake storageId)
     const delivery = await prisma.delivery.create({
       data: {
         produceId: order.produceId,

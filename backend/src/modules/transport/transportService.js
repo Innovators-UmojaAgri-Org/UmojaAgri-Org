@@ -2,7 +2,7 @@ const prisma = require("../../config/prisma");
 
 async function assignTransport({ deliveryId, transporterId, vehicleId }) {
   return prisma.$transaction(async (tx) => {
-    // 1. Fetch delivery
+    // Fetch delivery
     const delivery = await tx.delivery.findUnique({
       where: { id: deliveryId },
       include: { produce: true },
@@ -14,19 +14,19 @@ async function assignTransport({ deliveryId, transporterId, vehicleId }) {
       throw new Error("Delivery already assigned or processed");
     }
 
-    // 2. Fetch vehicle
+    // Fetch vehicle
     const vehicle = await tx.vehicle.findUnique({
       where: { id: vehicleId },
     });
 
     if (!vehicle) throw new Error("Vehicle not found");
 
-    // 3. Capacity check
+    // Capacity check
     if (vehicle.capacity < delivery.produce.quantity) {
       throw new Error("Vehicle capacity insufficient");
     }
 
-    // 4. Create assignment
+    // Create assignment
     const assignment = await tx.transportAssignment.create({
       data: {
         deliveryId,
@@ -35,13 +35,13 @@ async function assignTransport({ deliveryId, transporterId, vehicleId }) {
       },
     });
 
-    // 5. Update delivery status
+    // Update delivery status
     await tx.delivery.update({
       where: { id: deliveryId },
       data: { status: "ASSIGNED" },
     });
 
-    // 6. Log event
+    // Log event
     await tx.deliveryEvent.create({
       data: {
         deliveryId,

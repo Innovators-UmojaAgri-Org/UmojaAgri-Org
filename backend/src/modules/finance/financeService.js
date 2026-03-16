@@ -23,6 +23,8 @@ async function getTransactions(userId) {
   });
 }
 
+// Later Payment gateway integration can be added here (e.g. Stripe, PayPal) to handle real money transactions and payouts to farmers/sellers.
+// For now we just simulate transactions within the system.
 async function createTransaction({ userId, type, amount, description }) {
   const wallet = await getWallet(userId);
 

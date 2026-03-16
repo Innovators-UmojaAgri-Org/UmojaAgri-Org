@@ -48,6 +48,8 @@ async function getSupplyInsights(userId) {
   });
 }
 
+// For now we manually create AI results, in future we can integrate with external AI services (e.g. OpenAI) 
+// to generate insights and recommendations based on real data and parameters from the system
 async function createAIResult({ type, result, produceId, deliveryId }) {
   return prisma.aIResult.create({
     data: { type, result, produceId, deliveryId },
