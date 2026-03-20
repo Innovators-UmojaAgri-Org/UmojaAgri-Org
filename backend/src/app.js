@@ -5,15 +5,11 @@ const swaggerSpec = require("./config/swagger");
 const { marked } = require("marked");
 const fs = require("fs");
 const path = require("path");
-
-
-
 const userRoutes = require("./modules/users/usersRoutes");
 const produceRoutes = require("./modules/produce/produceRoutes");
 const deliveriesRoutes = require("./modules/deliveries/deliveriesRoutes");
 const transportRoutes = require("./modules/transport/transportRoutes");
 const ordersRoutes = require("./modules/orders/ordersRoutes");
-
 const alertsRoutes = require("./modules/alerts/alertsRoutes");
 const notificationsRoutes = require("./modules/notifications/notificationsRoutes");
 const cartRoutes = require("./modules/cart/cartRoutes");
@@ -30,6 +26,16 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Root route
+app.get("/", (req, res) => {
+  res.json({
+    message: "UmojaAgri API is running 🌱",
+    status: "healthy",
+    docs: "/api-docs",
+    endpoints: "/api-endpoints",
+  });
+});
 
 // Existing routes
 app.use("/api/users", userRoutes);
