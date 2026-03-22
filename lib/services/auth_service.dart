@@ -35,4 +35,30 @@ class AuthService {
       body: jsonEncode({'email': email, 'password': password}),
     );
   }
+
+  Future<http.Response> getProfile(String token) {
+    final uri = Uri.parse('$_baseUrl/api/users/profile');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> updateProfile({
+    required String token,
+    String? name,
+    String? location,
+    String? phone,
+  }) {
+    final uri = Uri.parse('$_baseUrl/api/users/profile');
+    return http.patch(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        if (name != null) 'name': name,
+        if (location != null) 'location': location,
+        if (phone != null) 'phone': phone,
+      }),
+    );
+  }
 }

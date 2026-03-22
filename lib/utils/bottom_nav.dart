@@ -13,7 +13,7 @@ class MainNavigation extends StatelessWidget {
 
   final List<Widget> pages = [
     DashboardScreen(),
-    const CropScreen(),
+    CropScreen(),
     ShipmentScreen(),
     const financeScreen(),
   ];

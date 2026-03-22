@@ -8,10 +8,8 @@ class OrderService {
   Future<http.Response> createOrder({
     required String token,
     required String produceId,
-    required String sellerId,
-    required String farmerId,
     required double quantity,
-    required String unit,
+    String? unit,
   }) {
     final uri = Uri.parse('$_baseUrl/api/orders');
     return http.post(
@@ -22,16 +20,29 @@ class OrderService {
       },
       body: jsonEncode({
         'produceId': produceId,
-        'sellerId': sellerId,
-        'farmerId': farmerId,
         'quantity': quantity,
-        'unit': unit,
+        if (unit != null) 'unit': unit,
       }),
     );
   }
 
   Future<http.Response> getOrders(String token) {
     final uri = Uri.parse('$_baseUrl/api/orders');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> getFarmerOrders(String token) {
+    final uri = Uri.parse('$_baseUrl/api/orders/farmer');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> getSellerOrders(String token) {
+    final uri = Uri.parse('$_baseUrl/api/orders/seller');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> getSellerOrderSummary(String token) {
+    final uri = Uri.parse('$_baseUrl/api/orders/seller/summary');
     return http.get(uri, headers: {'Authorization': 'Bearer $token'});
   }
 
@@ -49,5 +60,10 @@ class OrderService {
       },
       body: jsonEncode({'status': status}),
     );
+  }
+
+  Future<http.Response> getOrderById(String token, String orderId) {
+    final uri = Uri.parse('$_baseUrl/api/orders/$orderId');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
   }
 }

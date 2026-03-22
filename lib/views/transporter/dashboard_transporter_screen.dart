@@ -20,80 +20,126 @@ class _TransporterScreenState extends State<TransporterScreen> {
   @override
   void initState() {
     super.initState();
-    ctrl = Get.put(TransporterController());
+    // Use Get.find() to get the existing controller (created by binding)
+    ctrl = Get.find<TransporterController>();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundTrans,
-      appBar: _buildAppBar(),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _ActiveShipmentCard(ctrl: ctrl),
-          const SizedBox(height: 16),
-          _StatusSelector(ctrl: ctrl),
-          const SizedBox(height: 20),
-          _AiTrafficPrediction(ctrl: ctrl),
-          const SizedBox(height: 20),
-        ],
-      ),
-      bottomNavigationBar: _BottomNav(ctrl: ctrl),
-    );
+    return Obx(() {
+      // Show loading indicator while data is loading (but include nav)
+      if (ctrl.isLoading.value) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundTrans,
+          appBar: _buildAppBar(),
+          body: const Center(child: CircularProgressIndicator()),
+          bottomNavigationBar: _BottomNav(ctrl: ctrl),
+        );
+      }
+
+      // Show error state if data load failed and we have no transporter data
+      if (ctrl.errorMessage.isNotEmpty && ctrl.transporter.value == null) {
+        return Scaffold(
+          backgroundColor: AppColors.backgroundTrans,
+          appBar: _buildAppBar(),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  ctrl.errorMessage.value,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => ctrl.loadTransporterData(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+          bottomNavigationBar: _BottomNav(ctrl: ctrl),
+        );
+      }
+
+      // Show main content once data is loaded (even if no shipments)
+      return Scaffold(
+        backgroundColor: AppColors.backgroundTrans,
+        appBar: _buildAppBar(),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _ActiveShipmentCard(ctrl: ctrl),
+            const SizedBox(height: 16),
+            _StatusSelector(ctrl: ctrl),
+            const SizedBox(height: 20),
+            _AiTrafficPrediction(ctrl: ctrl),
+            const SizedBox(height: 20),
+          ],
+        ),
+        bottomNavigationBar: _BottomNav(ctrl: ctrl),
+      );
+    });
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.buttonGreen,
       elevation: 0,
-      titleSpacing: 4,
-      leading: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Obx(() {
-          final initial =
-              ctrl.transporter.value?.name.substring(0, 1).toUpperCase() ?? 'A';
-          return CircleAvatar(
-            backgroundColor: Color.fromRGBO(0, 201, 80, 1),
-            child: Text(
-              initial,
-              style: const TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          );
-        }),
-      ),
+      automaticallyImplyLeading: false, // 👈 remove default leading space
 
       title: Obx(() {
-        final name = ctrl.transporter.value?.name ?? '';
-        //reducing space between icon of the name and the welcome text
+        final transporter = ctrl.transporter.value;
+        final initial = transporter?.name.substring(0, 1).toUpperCase() ?? 'A';
+        final name = transporter?.name ?? '';
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Row(
           children: [
-            const Text(
-              'Welcome,',
-              style: TextStyle(fontSize: 12, color: Colors.white70),
-            ),
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+            // Avatar
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: const Color.fromRGBO(0, 201, 80, 1),
+              child: Text(
+                initial,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
+            ),
+
+            const SizedBox(width: 10), // 👈 controlled spacing
+            // Text
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Welcome,',
+                  style: TextStyle(fontSize: 12, color: Colors.white70),
+                ),
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
             ),
           ],
         );
       }),
+
       actions: [
         Stack(
           alignment: Alignment.topRight,
           children: [
             const Padding(
-              padding: EdgeInsets.only(right: 6, top: 12),
+              padding: EdgeInsets.only(right: 12, top: 12),
               child: Icon(
                 Icons.notifications_outlined,
                 color: Colors.white,
@@ -101,7 +147,7 @@ class _TransporterScreenState extends State<TransporterScreen> {
               ),
             ),
             Positioned(
-              right: 10,
+              right: 14,
               top: 10,
               child: Container(
                 width: 8,
@@ -128,11 +174,23 @@ class _ActiveShipmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final s =
-          ctrl.activeShipments.isNotEmpty ? ctrl.activeShipments.first : null;
+      final shipments = ctrl.transporter.value?.shipments ?? [];
+      final s = shipments.isNotEmpty ? shipments.first : null;
 
       if (s == null) {
-        return const Center(child: Text('No active shipments'));
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.backgroundTrans,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Center(
+            child: Text(
+              'No shipments yet',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
+          ),
+        );
       }
 
       return Container(
@@ -148,7 +206,7 @@ class _ActiveShipmentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Active Shipment',
+                  'Recent Shipment',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 _StatusBadge(label: s.status),
@@ -221,7 +279,7 @@ class _ActiveShipmentCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => Get.toNamed(AppRoutes.transporterRoutes),
+                onPressed: () => Get.toNamed(AppRoutes.transporterRouteDetails),
                 icon: const Icon(
                   Icons.navigation,
                   size: 16,
@@ -483,7 +541,7 @@ class _AiTrafficPrediction extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              onPressed: () => Get.toNamed(AppRoutes.transporterRoutes),
+              onPressed: () => Get.toNamed(AppRoutes.transporterRouteDetails),
               child: const Text(
                 'View Alternative Route',
                 style: TextStyle(

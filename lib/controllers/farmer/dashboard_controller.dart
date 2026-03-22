@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/models/farmer/dashboard_model.dart';
-import 'package:umoja_agri/services/produce_service.dart';
-import 'package:umoja_agri/services/order_service.dart';
+import 'package:umoja_agri/services/dashboard_service.dart';
 
 class DashboardController extends GetxController {
   var isLoading = true.obs;
@@ -28,26 +27,47 @@ class DashboardController extends GetxController {
       hasError(false);
       final token = _box.read('token') ?? '';
 
-      final produceRes = await ProduceService().getAllProduce(token);
-      final ordersRes = await OrderService().getOrders(token);
+      final dashboardRes = await DashboardService().getDashboard(token);
 
-      if (produceRes.statusCode == 200 && ordersRes.statusCode == 200) {
-        final produces = jsonDecode(produceRes.body) as List;
-        final orders = jsonDecode(ordersRes.body) as List;
-        final newOrders = orders.where((o) => o['status'] == 'PENDING').length;
+      if (dashboardRes.statusCode == 200) {
+        print('Dashboard API response: ${dashboardRes.body}');
+        final dashboardJson = jsonDecode(dashboardRes.body);
+        final data = dashboardJson['data'];
 
-        dashboardData.value = DashboardStatsModel.fromJson({
-          "farmerName": _box.read('name') ?? 'Farmer',
-          "monthlyRevenue": 0.0,
-          "newOrders": newOrders,
-          "totalCrops": produces.length,
-          "weeklyYield": [],
-        });
+        if (data != null && data is Map<String, dynamic>) {
+          dashboardData.value = DashboardStatsModel.fromJson(data);
+        } else {
+          // If API returns a different shape, use safe defaults.
+          dashboardData.value = DashboardStatsModel(
+            farmerName: _box.read('name') ?? 'Farmer',
+            monthlyRevenue: 0.0,
+            notificationsCount: 0,
+            yieldTrends: [],
+            recentShipments: [],
+          );
+        }
       } else {
-        hasError(true);
+        
+        // print(
+        //   'Dashboard API error: ${dashboardRes.statusCode} ${dashboardRes.body}',
+        // );
+        dashboardData.value = DashboardStatsModel(
+          farmerName: _box.read('name') ?? 'Farmer',
+          monthlyRevenue: 0.0,
+          notificationsCount: 0,
+          yieldTrends: [],
+          recentShipments: [],
+        );
       }
-    } catch (e) {
-      hasError(true);
+    } catch (e, st) {
+      print('Dashboard fetch failed: $e\n$st');
+      dashboardData.value = DashboardStatsModel(
+        farmerName: _box.read('name') ?? 'Farmer',
+        monthlyRevenue: 0.0,
+        notificationsCount: 0,
+        yieldTrends: [],
+        recentShipments: [],
+      );
     } finally {
       isLoading(false);
     }

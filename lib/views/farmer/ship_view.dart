@@ -138,9 +138,61 @@ class ShipmentScreen extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 /// SHIPMENT LIST
-                ...controller.filteredShipments
-                    .map((shipment) => _shipmentCard(shipment))
-                    .toList(),
+                Builder(
+                  builder: (context) {
+                    final isDesktop = MediaQuery.of(context).size.width >= 1000;
+                    if (controller.filteredShipments.isEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 10),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.black12),
+                        ),
+                        child: Column(
+                          children: const [
+                            Icon(Icons.inbox, size: 48, color: Colors.grey),
+                            SizedBox(height: 12),
+                            Text(
+                              'No shipments yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Create a shipment or assign transporter to view progress here.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 13, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    if (isDesktop) {
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: controller.filteredShipments
+                            .map((shipment) => SizedBox(
+                                  width: 460,
+                                  child: _shipmentCard(shipment),
+                                ))
+                            .toList(),
+                      );
+                    }
+
+                    return Column(
+                      children: controller.filteredShipments
+                          .map((shipment) => _shipmentCard(shipment))
+                          .toList(),
+                    );
+                  },
+                ),
 
                 const SizedBox(height: 40),
               ],

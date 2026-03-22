@@ -125,9 +125,7 @@ class RoleSelectionScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        onPressed: () {
-          Get.toNamed('/transporter');
-        },
+        onPressed: onTap,
         child: Text(
           text,
           style: const TextStyle(color: AppColors.primaryOrange),

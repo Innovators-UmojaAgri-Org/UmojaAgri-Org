@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/models/farmer/shipment_model.dart';
-import 'package:umoja_agri/services/delivery_service.dart';
+import 'package:umoja_agri/services/shipment_service.dart';
 
 class ShipmentController extends GetxController {
   var isLoading = false.obs;
@@ -20,26 +20,42 @@ class ShipmentController extends GetxController {
     isLoading.value = true;
     try {
       final token = _box.read('token') ?? '';
-      final res = await DeliveryService().getDeliveries(token);
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body) as List;
-        shipments.value = data.map((d) => ShipmentModel(
-          id: d['id'],
-          product: d['produce']?['name'] ?? 'Unknown',
-          bags: (d['produce']?['quantity'] ?? 0).toInt(),
-          status: d['status'],
-          destination: d['storage']?['address'] ?? 'Unknown',
-          departureDate: d['createdAt']?.toString().substring(0, 10) ?? '',
-          arrivalDate: '',
-          distanceKm: 0,
-          needsTransport: d['transport'] == null,
-          driverName: d['transport']?['transporter']?['name'] ?? 'Not Assigned',
-          recommendedVehicle: '',
-          vehicleReasons: [],
-        )).toList();
+      // print('=== FARMER LOADING SHIPMENTS ===');
+      final res = await ShipmentService().getShipments(token);
+       if (res.statusCode == 200) {
+        final response = jsonDecode(res.body);
+        final data = response['data'] as List;
+        shipments.value =
+            data
+                .map(
+                  (s) => ShipmentModel(
+                    id: s['shipmentCode'] ?? s['id'],
+                    product: s['cargo'] ?? 'Unknown',
+                    bags: (s['weight'] ?? 0).toInt(),
+                    status: s['status'] ?? 'PENDING',
+                    destination: s['destination'] ?? 'Unknown',
+                    departureDate:
+                        DateTime.tryParse(
+                          s['createdAt'] ?? '',
+                        )?.toString().substring(0, 10) ??
+                        '',
+                    arrivalDate: '',
+                    distanceKm: (s['route']?['distanceKm'] ?? 0).toInt(),
+                    needsTransport:
+                        s['status'] == 'PENDING' || s['transporter'] == null,
+                    driverName: s['transporter']?['name'] ?? 'Not Assigned',
+                    recommendedVehicle: _getRecommendedVehicle(
+                      s['cargo'] ?? '',
+                    ),
+                    vehicleReasons: _getVehicleReasons(s['cargo'] ?? ''),
+                  ),
+                )
+                .toList();
+        // print('✓ Loaded ${shipments.length} shipments successfully');
+      } else {
+
       }
-    } catch (e) {
-      // fail silently
+    } catch (e, stackTrace) {
     } finally {
       isLoading.value = false;
     }
@@ -52,8 +68,63 @@ class ShipmentController extends GetxController {
     return shipments.toList();
   }
 
-  int get inTransitCount => shipments.where((s) => s.status == "IN_TRANSIT").length;
-  int get deliveredCount => shipments.where((s) => s.status == "DELIVERED").length;
+  int get inTransitCount =>
+      shipments.where((s) => s.status == "IN_TRANSIT").length;
+  int get deliveredCount =>
+      shipments.where((s) => s.status == "DELIVERED").length;
   int get pendingCount => shipments.where((s) => s.status == "PENDING").length;
-  int get needsTransportCount => shipments.where((s) => s.needsTransport).length;
+  int get needsTransportCount =>
+      shipments.where((s) => s.needsTransport).length;
+
+  String _getRecommendedVehicle(String cargo) {
+    // Generate vehicle recommendations based on cargo type
+    final cargoLower = cargo.toLowerCase();
+    if (cargoLower.contains('tomato') || cargoLower.contains('pepper')) {
+      return 'Refrigerated Truck';
+    } else if (cargoLower.contains('rice') || cargoLower.contains('beans')) {
+      return 'Covered Truck';
+    } else if (cargoLower.contains('maize') || cargoLower.contains('corn')) {
+      return 'Open Truck';
+    } else if (cargoLower.contains('onion')) {
+      return 'Ventilated Truck';
+    } else {
+      return 'Standard Truck';
+    }
+  }
+
+  List<String> _getVehicleReasons(String cargo) {
+    // Generate backend-like reasons for vehicle recommendations
+    final cargoLower = cargo.toLowerCase();
+    if (cargoLower.contains('tomato') || cargoLower.contains('pepper')) {
+      return [
+        'Temperature control prevents spoilage',
+        'Maintains freshness during transit',
+        'Reduces waste by up to 30%',
+      ];
+    } else if (cargoLower.contains('rice') || cargoLower.contains('beans')) {
+      return [
+        'Protection from moisture and pests',
+        'Prevents contamination',
+        'Maintains grain quality',
+      ];
+    } else if (cargoLower.contains('maize') || cargoLower.contains('corn')) {
+      return [
+        'Cost-effective for dry goods',
+        'Easy loading/unloading',
+        'Suitable for bulk transport',
+      ];
+    } else if (cargoLower.contains('onion')) {
+      return [
+        'Proper ventilation prevents sprouting',
+        'Reduces moisture buildup',
+        'Maintains market quality',
+      ];
+    } else {
+      return [
+        'Versatile for various cargo types',
+        'Reliable performance',
+        'Cost-effective transportation',
+      ];
+    }
+  }
 }

@@ -1,14 +1,18 @@
 import 'package:get/get.dart';
 import 'package:umoja_agri/views/farmer/dashboard_screen.dart';
-import 'package:umoja_agri/views/marketer/dashboard_farmer_screen.dart';
+import 'package:umoja_agri/views/marketer/dashboard_marketer_screen.dart';
 import 'package:umoja_agri/views/onboarding/role_selection.dart';
 import 'package:umoja_agri/views/onboarding/sign_in.dart';
 import 'package:umoja_agri/views/onboarding/sign_up.dart';
 import 'package:umoja_agri/views/onboarding/splash_screen.dart';
 import 'package:umoja_agri/views/onboarding/language_selection_screen.dart';
 import 'package:umoja_agri/views/onboarding/onboarding_screen.dart';
-import 'package:umoja_agri/views/transporter/transporter_screen.dart';
+import 'package:umoja_agri/views/transporter/dashboard_transporter_screen.dart';
+import 'package:umoja_agri/views/transporter/AIroute_screen.dart';
 import 'package:umoja_agri/views/transporter/route_screen.dart';
+import 'package:umoja_agri/bindings/transporter_binding.dart';
+import 'package:umoja_agri/bindings/farmer_binding.dart';
+import 'package:umoja_agri/bindings/marketer_binding.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -22,6 +26,7 @@ class AppRoutes {
   static const String transporter = '/transporter';
   static const String transporterRoutes = '/transporter/routes';
   static const String transporterRouteDetails = '/transporter/route-details';
+
   //home-marketer
   static const String home_marketer = '/home-marketer';
 
@@ -61,21 +66,31 @@ class AppRoutes {
     GetPage(
       name: dashboard,
       page: () => DashboardScreen(),
+      binding: FarmerBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage(
       name: home_marketer,
       page: () => HomeScreen(),
+      binding: MarketerBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage(
       name: transporter,
       page: () => TransporterScreen(),
+      binding: TransporterBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage(
       name: transporterRoutes,
-      page: () => RouteScreen(),
+      page: () => RoutesScreen(),
+      binding: TransporterBinding(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: transporterRouteDetails,
+      page: () => AiRouteScreen(),
+      binding: TransporterBinding(),
       transition: Transition.rightToLeft,
     ),
   ];

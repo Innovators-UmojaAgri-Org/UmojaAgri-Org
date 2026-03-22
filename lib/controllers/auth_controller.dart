@@ -22,9 +22,8 @@ class AuthController extends GetxController {
 
   @override
   void onClose() {
-    emailCtrl.dispose();
-    passwordCtrl.dispose();
-    nameCtrl.dispose();
+    // Removed dispose calls to prevent "used after being disposed" error
+    // since controllers are used across login/signup screens
     super.onClose();
   }
 
@@ -52,7 +51,10 @@ class AuthController extends GetxController {
         Get.offAllNamed(AppRoutes.sign_in);
       } else {
         final body = jsonDecode(res.body);
-        Get.snackbar('Registration failed', body['message'] ?? res.reasonPhrase);
+        Get.snackbar(
+          'Registration failed',
+          body['message'] ?? res.reasonPhrase,
+        );
       }
     } catch (e) {
       Get.snackbar('Error', 'Could not register. Please try again.');
@@ -74,14 +76,29 @@ class AuthController extends GetxController {
       if (res.statusCode == 200) {
         final body = jsonDecode(res.body);
         final userToken = body['token'] ?? '';
-        final roleId = body['user']?['roleId'] ?? selectedRole.value;
-        final userName = body['user']?['name'] ?? '';
+
+        // Fetch user profile to get role
+        final profileRes = await _service.getProfile(userToken);
+        String roleId = RoleIds.farmer; // default
+        String userName = '';
+        String userId = '';
+        if (profileRes.statusCode == 200) {
+          final profileBody = jsonDecode(profileRes.body);
+          final userData = profileBody['data'];
+          roleId = userData['role']['name'] ?? RoleIds.farmer;
+          userName = userData['name'] ?? '';
+          userId = userData['id'] ?? '';
+        }
 
         token.value = userToken;
         _box.write('token', userToken);
         _box.write('roleId', roleId);
         _box.write('name', userName);
-        _box.write('userId', body['user']?['id'] ?? '');
+        _box.write('userId', userId);
+
+        // Clear login fields after successful login
+        emailCtrl.clear();
+        passwordCtrl.clear();
 
         if (roleId == RoleIds.farmer) {
           final dash = Get.put(DashboardController());
@@ -95,7 +112,7 @@ class AuthController extends GetxController {
           await market.ensureInitialized();
           Get.offAllNamed(AppRoutes.home_marketer);
         } else {
-          Get.offAllNamed(AppRoutes.home);
+          Get.offAllNamed(AppRoutes.home); // fallback
         }
       } else {
         final body = jsonDecode(res.body);
@@ -111,6 +128,10 @@ class AuthController extends GetxController {
   void logout() {
     _box.erase();
     token.value = '';
+    // Clear fields on logout
+    emailCtrl.clear();
+    passwordCtrl.clear();
+    nameCtrl.clear();
     Get.offAllNamed(AppRoutes.sign_in);
   }
 

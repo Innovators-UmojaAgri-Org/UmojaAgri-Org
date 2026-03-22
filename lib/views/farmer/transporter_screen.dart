@@ -1,16 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/transporter_controller.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../models/farmer/shipment_model.dart';
 import '../../models/transporter_model.dart';
+import '../../services/shipment_service.dart';
+import '../../controllers/farmer/shipment_controller.dart';
+import 'dart:convert';
 
-class TransporterSelectionScreen extends StatelessWidget {
+class TransporterSelectionScreen extends StatefulWidget {
   final ShipmentModel shipment;
 
-  TransporterSelectionScreen({Key? key, required this.shipment})
+  const TransporterSelectionScreen({Key? key, required this.shipment})
     : super(key: key);
 
-  final TransporterController controller = Get.put(TransporterController());
+  @override
+  State<TransporterSelectionScreen> createState() =>
+      _TransporterSelectionScreenState();
+}
+
+class _TransporterSelectionScreenState
+    extends State<TransporterSelectionScreen> {
+  final RxBool isLoading = true.obs;
+  final RxList<TransporterModel> transporters = <TransporterModel>[].obs;
+  final _box = GetStorage();
+
+  @override
+  void initState() {
+    super.initState();
+    loadTransporters();
+  }
+
+  Future<void> loadTransporters() async {
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await ShipmentService().getAvailableTransporters(token);
+      print('Available transporters response: ${res.body}');
+      if (res.statusCode == 200) {
+        final response = jsonDecode(res.body);
+        final data = response['data'] as List;
+        transporters.value =
+            data
+                .map(
+                  (t) => TransporterModel(
+                    id: t['id'],
+                    name: t['name'] ?? 'Unknown',
+                    tag: 'Verified Carrier',
+                    driverName: 'N/A', 
+                    vehicleType: t['vehicle_type'] ?? 'Truck',
+                    phoneNumber: 'N/A',
+                    licensePlate: 'N/A',
+                    rate: '₦${t['price_per_km'] ?? 0}',
+                    eta: '${t['estimated_delivery_hours'] ?? 0} hours',
+                  ),
+                )
+                .toList();
+      }
+    } catch (e) {
+      print('Error loading transporters: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> selectTransporter(TransporterModel t) async {
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await ShipmentService().selectTransporter(
+        token,
+        widget.shipment.id,
+        t.id,
+      );
+      print('Select transporter response: ${res.body}');
+      if (res.statusCode == 200) {
+        // Refresh shipments
+        final shipmentController = Get.find<ShipmentController>();
+        shipmentController.loadShipments();
+        // Success, show dialog and navigate back
+        _showConfirmationDialog(context, t);
+      } else {
+        Get.snackbar('Error', 'Failed to select transporter');
+      }
+    } catch (e) {
+      print('Error selecting transporter: $e');
+      Get.snackbar('Error', 'Failed to select transporter');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +92,7 @@ class TransporterSelectionScreen extends StatelessWidget {
       backgroundColor: const Color(0xFFDDE5CF),
       body: SafeArea(
         child: Obx(() {
-          if (controller.isLoading.value) {
+          if (isLoading.value) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -73,14 +147,14 @@ class TransporterSelectionScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 46),
                 child: Text(
-                  "Choose a carrier for ${shipment.id}",
+                  "Choose a carrier for ${widget.shipment.id}",
                   style: const TextStyle(fontSize: 12, color: Colors.black54),
                 ),
               ),
 
               const SizedBox(height: 16),
 
-              // ── Shipment summary 
+              // ── Shipment summary
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Container(
@@ -112,14 +186,14 @@ class TransporterSelectionScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              shipment.id,
+                              widget.shipment.id,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
                             ),
                             Text(
-                              "${shipment.product} • ${shipment.bags} Bags  →  ${shipment.destination}",
+                              "${widget.shipment.product} • ${widget.shipment.bags} Bags  →  ${widget.shipment.destination}",
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: Colors.black54,
@@ -136,16 +210,47 @@ class TransporterSelectionScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // ── Transporter list 
+              // ── Transporter list
               Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: controller.transporters.length,
-                  itemBuilder: (context, index) {
-                    final t = controller.transporters[index];
-                    return _transporterCard(context, t);
-                  },
-                ),
+                child:
+                    transporters.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(
+                                Icons.local_shipping_outlined,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 12),
+                              Text(
+                                'No transporters available',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Please make sure transporters are registered in the system.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          itemCount: transporters.length,
+                          itemBuilder: (context, index) {
+                            final t = transporters[index];
+                            return _transporterCard(context, t);
+                          },
+                        ),
               ),
             ],
           );
@@ -256,10 +361,7 @@ class TransporterSelectionScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              onPressed: () {
-                controller.selectTransporter(t);
-                _showConfirmationDialog(context, t);
-              },
+              onPressed: () => selectTransporter(t),
               child: const Text(
                 "Select Transporter",
                 style: TextStyle(
@@ -325,7 +427,7 @@ class TransporterSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    "${t.name} has been assigned to ${shipment.id}",
+                    "${t.name} has been assigned to ${widget.shipment.id}",
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 13, color: Colors.black54),
                   ),
@@ -427,7 +529,7 @@ class TransporterSelectionScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              shipment.id,
+                              widget.shipment.id,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
@@ -438,7 +540,7 @@ class TransporterSelectionScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          "${shipment.product} • ${shipment.bags} Bags",
+                          "${widget.shipment.product} • ${widget.shipment.bags} Bags",
                           style: const TextStyle(
                             fontSize: 11,
                             color: Colors.black54,
@@ -450,13 +552,13 @@ class TransporterSelectionScreen extends StatelessWidget {
                             Expanded(
                               child: _detailCell(
                                 "Destination",
-                                shipment.destination,
+                                widget.shipment.destination,
                               ),
                             ),
                             Expanded(
                               child: _detailCell(
                                 "Departure",
-                                shipment.departureDate,
+                                widget.shipment.departureDate,
                               ),
                             ),
                           ],
@@ -467,13 +569,13 @@ class TransporterSelectionScreen extends StatelessWidget {
                             Expanded(
                               child: _detailCell(
                                 "Est. Arrival",
-                                shipment.arrivalDate,
+                                widget.shipment.arrivalDate,
                               ),
                             ),
                             Expanded(
                               child: _detailCell(
                                 "Distance",
-                                "${shipment.distanceKm} km",
+                                "${widget.shipment.distanceKm} km",
                               ),
                             ),
                           ],
@@ -496,7 +598,6 @@ class TransporterSelectionScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        controller.clearSelection();
                         Get.back(); // close dialog
                         Get.back(); // back to shipments
                       },

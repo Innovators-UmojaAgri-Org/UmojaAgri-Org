@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.put(MarketerController());
+    final ctrl = Get.find<MarketerController>();
 
     return Obx(
       () => Scaffold(
@@ -94,7 +94,7 @@ class _HomeContent extends StatelessWidget {
                     children: [
                       _Header(ctrl: ctrl),
                       const SizedBox(height: 16),
-                      const _AiInsight(),
+                      _AiInsight(ctrl: ctrl),
                       const SizedBox(height: 20),
                       _IncomingDeliveries(ctrl: ctrl),
                       const SizedBox(height: 20),
@@ -199,65 +199,80 @@ class _IconBtn extends StatelessWidget {
 }
 
 class _AiInsight extends StatelessWidget {
-  const _AiInsight();
+  final MarketerController ctrl;
+  const _AiInsight({required this.ctrl});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppTheme.accentLight,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+    return Obx(() {
+      // Get the first alert or show a default message
+      final alert = ctrl.alerts.isNotEmpty ? ctrl.alerts.first : null;
+
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.accentLight,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.accent.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.auto_awesome,
+                color: AppTheme.accent,
+                size: 18,
+              ),
             ),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: AppTheme.accent,
-              size: 18,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'AI Supply Insight',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        alert != null
+                            ? alert.type.replaceAll('_', ' ').toUpperCase()
+                            : 'AI Supply Insight',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.flash_on, size: 12, color: AppTheme.accent),
-                  ],
-                ),
-                SizedBox(height: 2),
-                Text(
-                  'Supply drop expected next week due to Kaduna rains. Stock up now to maintain inventory levels.',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textSecondary,
-                    height: 1.4,
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.flash_on,
+                        size: 12,
+                        color: AppTheme.accent,
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    alert?.message ??
+                        'Supply drop expected next week due to Kaduna rains. Stock up now to maintain inventory levels.',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.textSecondary,
+                      height: 1.4,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -327,14 +342,14 @@ class _DeliveryCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Status: On the way',
+                      'Status: ${d.status.replaceAll('_', ' ')}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.green.shade600,
+                        color: _getStatusColor(d.status),
                       ),
                     ),
                     Text(
-                      'From ${d.from} • Shipment #${d.shipmentId}',
+                      'From ${d.from} to ${d.to} • Shipment #${d.shipmentId}',
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppTheme.textSecondary,
@@ -402,6 +417,21 @@ class _DeliveryCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return Colors.orange.shade600;
+      case 'IN_TRANSIT':
+        return Colors.blue.shade600;
+      case 'DELIVERED':
+        return Colors.green.shade600;
+      case 'CANCELLED':
+        return Colors.red.shade600;
+      default:
+        return AppTheme.textSecondary;
+    }
   }
 }
 
@@ -484,9 +514,7 @@ class _ProduceCard extends StatelessWidget {
                   top: Radius.circular(12),
                 ),
               ),
-              child: Center(
-                child: Text(p.imageEmoji, style: const TextStyle(fontSize: 52)),
-              ),
+              child: _buildProduceImage(p.imageUrl),
             ),
           ),
           Padding(
@@ -567,6 +595,61 @@ class _ProduceCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProduceImage(String? imageUrl) {
+    final defaultImage =
+        'https://images.unsplash.com/photo-1488459716781-831d716d3c94?w=300&h=300&fit=crop';
+    final url =
+        (imageUrl != null && imageUrl.isNotEmpty) ? imageUrl : defaultImage;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (context, error, stackTrace) {
+          // Fallback to a placeholder emoji if image fails to load
+          return Container(
+            color: AppTheme.background,
+            width: double.infinity,
+            height: double.infinity,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🌾', style: TextStyle(fontSize: 56)),
+                  const SizedBox(height: 8),
+                  // Text(
+                  //   'Image unavailable',
+                  //   style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                  // ),
+                ],
+              ),
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: AppTheme.background,
+            width: double.infinity,
+            height: double.infinity,
+            child: Center(
+              child: CircularProgressIndicator(
+                value:
+                    loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null,
+              ),
+            ),
+          );
+        },
       ),
     );
   }

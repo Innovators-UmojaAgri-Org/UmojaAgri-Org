@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:umoja_agri/views/farmer/crop_view.dart';
 import 'package:umoja_agri/views/farmer/ship_view.dart';
 import '../../controllers/farmer/dashboard_controller.dart';
 
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({Key? key}) : super(key: key);
 
-  final DashboardController controller = Get.put(DashboardController());
+  final DashboardController controller = Get.find<DashboardController>();
   final RxInt selectedIndex = 0.obs;
 
   @override
@@ -115,7 +116,7 @@ class DashboardScreen extends StatelessWidget {
 
               const SizedBox(height: 22),
 
-              // ── REVENUE CARD 
+              // ── REVENUE CARD
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(20),
@@ -245,7 +246,7 @@ class DashboardScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              // ── YIELD TRENDS 
+              // ── YIELD TRENDS
               const Text(
                 "Yields Trends",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -298,7 +299,7 @@ class DashboardScreen extends StatelessWidget {
           ),
         ),
 
-        const Center(child: Text("Crop Screen")),
+        CropScreen(),
         ShipmentScreen(),
         const Center(child: Text("Finance Screen")),
       ],
@@ -335,7 +336,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── BOTTOM NAV 
+  // ── BOTTOM NAV
   Widget _buildBottomNav() {
     return Container(
       height: 72,
