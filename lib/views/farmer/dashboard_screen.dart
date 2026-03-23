@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/models/farmer/dashboard_model.dart';
 import 'package:umoja_agri/views/farmer/crop_view.dart';
 import 'package:umoja_agri/views/farmer/ship_view.dart';
@@ -17,19 +18,20 @@ class DashboardScreen extends StatelessWidget {
     return Obx(
       () => Scaffold(
         backgroundColor: const Color(0xFFEAF0DC),
-        body: SafeArea(child: _buildBody()),
+        body: SafeArea(child: _buildBody(context)),
         bottomNavigationBar: _buildBottomNav(),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     if (controller.isLoading.value) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // ── fallback if data is null or error
     final data = controller.dashboardData.value ?? _fallbackData();
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth > 600;
 
     return IndexedStack(
       index: selectedIndex.value,
@@ -237,7 +239,7 @@ class DashboardScreen extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
-                childAspectRatio: 2.2,
+                childAspectRatio: isWide ? 4.0 : 2.2,
                 children: [
                   _ActivityCard(
                     title: "New Crop",
@@ -328,7 +330,6 @@ class DashboardScreen extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              // ── REFRESH BUTTON
               if (controller.hasError.value)
                 Center(
                   child: TextButton.icon(
@@ -353,10 +354,10 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── FALLBACK DATA when API fails
   DashboardStatsModel _fallbackData() {
+    final box = GetStorage();
     return DashboardStatsModel.fromJson({
-      "farmerName": "Farmer",
+      "farmerName": box.read('name') ?? 'Farmer',
       "monthlyRevenue": 280836.00,
       "newOrders": 0,
       "totalCrops": 0,
@@ -403,10 +404,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 11, color: Colors.black54),
                 ),
               ],
             ),
@@ -446,7 +444,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // ── BOTTOM NAV
   Widget _buildBottomNav() {
     return Container(
       height: 72,
@@ -482,15 +479,13 @@ class DashboardScreen extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color:
-                  isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+              color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
               size: 22,
-              color:
-                  isSelected ? Colors.white : const Color(0xFF4A7C3F),
+              color: isSelected ? Colors.white : const Color(0xFF4A7C3F),
             ),
           ),
           const SizedBox(height: 3),
@@ -498,10 +493,8 @@ class DashboardScreen extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color:
-                  isSelected ? const Color(0xFF2E7D32) : Colors.black45,
-              fontWeight:
-                  isSelected ? FontWeight.w700 : FontWeight.normal,
+              color: isSelected ? const Color(0xFF2E7D32) : Colors.black45,
+              fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
         ],
