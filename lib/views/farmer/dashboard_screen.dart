@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:umoja_agri/views/farmer/crop_view.dart';
 import 'package:umoja_agri/views/farmer/ship_view.dart';
+import 'package:umoja_agri/views/farmer/finance_view.dart';
 import '../../controllers/farmer/dashboard_controller.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -26,11 +27,8 @@ class DashboardScreen extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (controller.hasError.value) {
-      return const Center(child: Text("Something went wrong"));
-    }
-
-    final data = controller.dashboardData.value!;
+    // ── fallback if data is null or error
+    final data = controller.dashboardData.value ?? _fallbackData();
 
     return IndexedStack(
       index: selectedIndex.value,
@@ -56,7 +54,6 @@ class DashboardScreen extends StatelessWidget {
                           color: Colors.white,
                           size: 22,
                         ),
-                        // backgroundImage: AssetImage("assets/avatar.png"),
                       ),
                       const SizedBox(width: 10),
                       Column(
@@ -92,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.6),
+                          color: Colors.white.withValues(alpha: 0.6),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.notifications_none, size: 24),
@@ -141,7 +138,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      "#${data.monthlyRevenue.toStringAsFixed(2)}",
+                      "₦${data.monthlyRevenue.toStringAsFixed(2)}",
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 28,
@@ -175,13 +172,37 @@ class DashboardScreen extends StatelessWidget {
 
               const SizedBox(height: 26),
 
+              // ── STATS ROW
+              Row(
+                children: [
+                  _statCard(
+                    "New Orders",
+                    data.newOrders.toString(),
+                    Icons.receipt_long_outlined,
+                    const Color(0xFF1B5E20),
+                  ),
+                  const SizedBox(width: 12),
+                  _statCard(
+                    "Total Crops",
+                    data.totalCrops.toString(),
+                    Icons.eco_outlined,
+                    const Color(0xFF2E7D32),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 26),
+
               // ── ACTIVITIES
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
                     "Activities",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   GestureDetector(
                     onTap: () {},
@@ -215,15 +236,16 @@ class DashboardScreen extends StatelessWidget {
                 physics: const NeverScrollableScrollPhysics(),
                 crossAxisSpacing: 14,
                 mainAxisSpacing: 14,
-                childAspectRatio: 2.2, // wider than tall
-                children: const [
+                childAspectRatio: 2.2,
+                children: [
                   _ActivityCard(
                     title: "New Crop",
                     icon: Icons.eco,
-                    iconColor: Color(0xFF2E7D32),
-                    bgColor: Color(0xFFE2EDD4),
+                    iconColor: const Color(0xFF2E7D32),
+                    bgColor: const Color(0xFFE2EDD4),
+                    onTap: () => selectedIndex.value = 1,
                   ),
-                  _ActivityCard(
+                  const _ActivityCard(
                     title: "Weather",
                     icon: Icons.cloud_outlined,
                     iconColor: Color(0xFF1565C0),
@@ -232,14 +254,16 @@ class DashboardScreen extends StatelessWidget {
                   _ActivityCard(
                     title: "Inventory",
                     icon: Icons.agriculture,
-                    iconColor: Color(0xFF6D4C41),
-                    bgColor: Color(0xFFE2EDD4),
+                    iconColor: const Color(0xFF6D4C41),
+                    bgColor: const Color(0xFFE2EDD4),
+                    onTap: () => selectedIndex.value = 2,
                   ),
                   _ActivityCard(
                     title: "Reports",
                     icon: Icons.bar_chart_rounded,
-                    iconColor: Color(0xFFE65100),
-                    bgColor: Color(0xFFE2EDD4),
+                    iconColor: const Color(0xFFE65100),
+                    bgColor: const Color(0xFFE2EDD4),
+                    onTap: () => selectedIndex.value = 3,
                   ),
                 ],
               ),
@@ -251,14 +275,14 @@ class DashboardScreen extends StatelessWidget {
                 "Yields Trends",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 60),
 
               Stack(
                 clipBehavior: Clip.none,
                 children: [
                   Positioned(
                     right: 30,
-                    top: -48,
+                    top: -58,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
@@ -279,20 +303,42 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      _bar(16, "Mon", Colors.teal),
-                      _bar(22, "Tues", const Color(0xFF1B5E20)),
-                      _bar(27, "Wed", Colors.lightGreen),
-                      _bar(45, "Peak\nThurs", Colors.orange),
-                      _bar(33, "Fri", Colors.deepOrange),
-                    ],
+                    children: data.weeklyYield.map((y) {
+                      final colors = [
+                        Colors.teal,
+                        const Color(0xFF1B5E20),
+                        Colors.lightGreen,
+                        Colors.orange,
+                        Colors.deepOrange,
+                      ];
+                      final idx = data.weeklyYield.indexOf(y);
+                      return _bar(
+                        y.value,
+                        y.day,
+                        colors[idx % colors.length],
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
+
+              const SizedBox(height: 40),
+
+              // ── REFRESH BUTTON
+              if (controller.hasError.value)
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => controller.refreshDashboard(),
+                    icon: const Icon(Icons.refresh, color: Color(0xFF2E7D32)),
+                    label: const Text(
+                      "Refresh Data",
+                      style: TextStyle(color: Color(0xFF2E7D32)),
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 40),
             ],
@@ -301,8 +347,71 @@ class DashboardScreen extends StatelessWidget {
 
         CropScreen(),
         ShipmentScreen(),
-        const Center(child: Text("Finance Screen")),
+        const financeScreen(),
       ],
+    );
+  }
+
+  // ── FALLBACK DATA when API fails
+  DashboardStatsModel _fallbackData() {
+    return DashboardStatsModel.fromJson({
+      "farmerName": "Farmer",
+      "monthlyRevenue": 280836.00,
+      "newOrders": 0,
+      "totalCrops": 0,
+      "weeklyYield": [
+        {"day": "Mon", "value": 16},
+        {"day": "Tues", "value": 22},
+        {"day": "Wed", "value": 27},
+        {"day": "Peak\nThurs", "value": 45},
+        {"day": "Fri", "value": 33},
+      ],
+    });
+  }
+
+  Widget _statCard(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -343,7 +452,10 @@ class DashboardScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFEAF0DC),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+          ),
         ],
       ),
       child: Row(
@@ -360,7 +472,6 @@ class DashboardScreen extends StatelessWidget {
 
   Widget _navItem(IconData icon, String label, int index) {
     final isSelected = selectedIndex.value == index;
-
     return GestureDetector(
       onTap: () => selectedIndex.value = index,
       child: Column(
@@ -370,13 +481,15 @@ class DashboardScreen extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
+              color:
+                  isSelected ? const Color(0xFF2E7D32) : Colors.transparent,
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
               size: 22,
-              color: isSelected ? Colors.white : const Color(0xFF4A7C3F),
+              color:
+                  isSelected ? Colors.white : const Color(0xFF4A7C3F),
             ),
           ),
           const SizedBox(height: 3),
@@ -384,8 +497,10 @@ class DashboardScreen extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 11,
-              color: isSelected ? const Color(0xFF2E7D32) : Colors.black45,
-              fontWeight: isSelected ? FontWeight.w700 : FontWeight.normal,
+              color:
+                  isSelected ? const Color(0xFF2E7D32) : Colors.black45,
+              fontWeight:
+                  isSelected ? FontWeight.w700 : FontWeight.normal,
             ),
           ),
         ],
@@ -399,46 +514,54 @@ class _ActivityCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final Color bgColor;
+  final VoidCallback? onTap;
 
   const _ActivityCard({
     required this.title,
     required this.icon,
     required this.iconColor,
     required this.bgColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.12),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
-            child: Icon(icon, size: 22, color: iconColor),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-        ],
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(9),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
