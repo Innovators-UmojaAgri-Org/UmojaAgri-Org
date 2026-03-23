@@ -1,27 +1,51 @@
+class WeeklyYield {
+  final String day;
+  final int value;
+
+  const WeeklyYield({required this.day, required this.value});
+
+  factory WeeklyYield.fromJson(Map<String, dynamic> json) {
+    return WeeklyYield(
+      day: json['day'] ?? '',
+      value: json['value'] ?? 0,
+    );
+  }
+}
+
 class DashboardStatsModel {
   final String farmerName;
   final double monthlyRevenue;
-  final int notificationsCount;
-  final List<Map<String, dynamic>> yieldTrends;
-  final List<Map<String, dynamic>> recentShipments;
+  final int newOrders;
+  final int totalCrops;
+  final List<WeeklyYield> weeklyYield;
 
-  DashboardStatsModel({
+  const DashboardStatsModel({
     required this.farmerName,
     required this.monthlyRevenue,
-    required this.notificationsCount,
-    required this.yieldTrends,
-    required this.recentShipments,
+    required this.newOrders,
+    required this.totalCrops,
+    required this.weeklyYield,
   });
 
   factory DashboardStatsModel.fromJson(Map<String, dynamic> json) {
+    final yields = (json['weeklyYield'] as List? ?? [])
+        .map((y) => WeeklyYield.fromJson(y))
+        .toList();
+
     return DashboardStatsModel(
-      farmerName: json['user']['name'] ?? '',
-      monthlyRevenue: (json['monthly_revenue'] ?? 0).toDouble(),
-      notificationsCount: json['notifications_count'] ?? 0,
-      yieldTrends: List<Map<String, dynamic>>.from(json['yield_trends'] ?? []),
-      recentShipments: List<Map<String, dynamic>>.from(
-        json['recent_shipments'] ?? [],
-      ),
+      farmerName: json['farmerName'] ?? 'Farmer',
+      monthlyRevenue: (json['monthlyRevenue'] ?? 0).toDouble(),
+      newOrders: json['newOrders'] ?? 0,
+      totalCrops: json['totalCrops'] ?? 0,
+      weeklyYield: yields.isNotEmpty
+          ? yields
+          : [
+              WeeklyYield(day: 'Mon', value: 16),
+              WeeklyYield(day: 'Tues', value: 22),
+              WeeklyYield(day: 'Wed', value: 27),
+              WeeklyYield(day: 'Peak\nThurs', value: 45),
+              WeeklyYield(day: 'Fri', value: 33),
+            ],
     );
   }
 }
