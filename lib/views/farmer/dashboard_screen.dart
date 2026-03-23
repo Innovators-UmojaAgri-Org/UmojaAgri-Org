@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:umoja_agri/models/farmer/dashboard_model.dart';
 import 'package:umoja_agri/views/farmer/crop_view.dart';
 import 'package:umoja_agri/views/farmer/ship_view.dart';
 import 'package:umoja_agri/views/farmer/finance_view.dart';
