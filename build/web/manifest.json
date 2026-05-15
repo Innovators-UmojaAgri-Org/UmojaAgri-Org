@@ -31,5 +31,7 @@
             "type": "image/png",
             "purpose": "maskable"
         }
+        # Your build/web already has this — just make sure index.html has:
+    <link rel="manifest" href="manifest.json">
     ]
 }
