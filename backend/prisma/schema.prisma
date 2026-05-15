@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id    String @id @default(uuid())
+  name  String @unique
+  users User[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  location  String?
+  phone     String?
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+
+  produce              Produce[]
+  notifications        Notification[]
+  transportAssignments TransportAssignment[]
+
+  sellerOrders Order[] @relation("SellerOrders")
+  farmerOrders Order[] @relation("FarmerOrders")
+
+  driverProfile      DriverProfile?
+  transporterProfile TransporterProfile?
+  alerts             Alert[]
+
+  farmerShipments      Shipment[] @relation("FarmerShipments")
+  transporterShipments Shipment[] @relation("TransporterShipments")
+
+  wallet    Wallet?
+  cartItems CartItem[]
+}
+
+model StorageLocation {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  capacity  Float
+  createdAt DateTime @default(now())
+
+  deliveries Delivery[]
+}
+
+model Produce {
+  id             String  @id @default(uuid())
+  name           String
+  description    String?
+  quantity       Float
+  unit           String?
+
+  pricePerUnit   Float @default(0)
+  freshnessScore Float?
+  imageUrl       String?
+  location       String?
+
+  farmerId String
+  owner    User @relation(fields: [farmerId], references: [id])
+
+  harvestDate DateTime?
+  expiryDate  DateTime?
+
+  createdAt DateTime @default(now())
+
+  deliveries Delivery[]
+  aiResults  AIResult[]
+
+  orders    Order[]    @relation("ProduceOrders")
+  cartItems CartItem[]
+}
+
+model Order {
+  id        String  @id @default(uuid())
+  orderCode String? @unique
+
+  produceId String
+  produce   Produce @relation(fields: [produceId], references: [id], name: "ProduceOrders")
+
+  sellerId String
+  seller   User @relation("SellerOrders", fields: [sellerId], references: [id])
+
+  farmerId String
+  farmer   User @relation("FarmerOrders", fields: [farmerId], references: [id])
+
+  quantity Float
+  unit     String
+  amount   Float @default(0)
+
+  status OrderStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliveryId String?   @unique
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id], name: "OrderDelivery")
+}
+
+model Delivery {
+  id String @id @default(uuid())
+
+  produceId String
+  produce   Produce         @relation(fields: [produceId], references: [id])
+  storageId String
+  storage   StorageLocation @relation(fields: [storageId], references: [id])
+
+  status DeliveryStatus
+
+  origin          String?
+  destination     String?
+  progressPercent Float?
+  etaMinutes      Int?
+  currentLocation String?
+
+  createdAt DateTime @default(now())
+
+  events    DeliveryEvent[]
+  transport TransportAssignment?
+  aiResults AIResult[]
+
+  order Order? @relation("OrderDelivery")
+}
+
+model DeliveryEvent {
+  id         String         @id @default(uuid())
+  deliveryId String
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+
+  status    DeliveryStatus
+  location  String
+  timestamp DateTime @default(now())
+}
+
+model Vehicle {
+  id          String  @id @default(uuid())
+  plateNumber String  @unique
+  capacity    Float
+  type        String?
+
+  assignments TransportAssignment[]
+}
+
+model TransportAssignment {
+  id String @id @default(uuid())
+
+  deliveryId String   @unique
+  delivery   Delivery @relation(fields: [deliveryId], references: [id])
+
+  transporterId String
+  transporter   User @relation(fields: [transporterId], references: [id])
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  assignedAt DateTime @default(now())
+}
+
+model DriverProfile {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  licenseNumber   String
+  experienceYears Int
+  rating          Float?  @default(5)
+  status          String?
+  location        String?
+  dynamicRouting  Boolean @default(false)
+}
+
+model TransporterProfile {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  companyName            String
+  rating                 Float   @default(5)
+  pricePerKm             Float   @default(0)
+  vehicleType            String?
+  estimatedDeliveryHours Int?
+
+  createdAt DateTime @default(now())
+}
+
+model Shipment {
+  id           String @id @default(uuid())
+  shipmentCode String @unique
+
+  farmerId String
+  farmer   User @relation("FarmerShipments", fields: [farmerId], references: [id])
+
+  cargo      String
+  weight     Float
+  weightUnit String @default("kg")
+  destination String
+  price       Float  @default(0)
+
+  status ShipmentStatus @default(PENDING)
+
+  transporterId String?
+  transporter   User?  @relation("TransporterShipments", fields: [transporterId], references: [id])
+
+  routeId String?
+  route   Route? @relation(fields: [routeId], references: [id])
+
+  routeAccepted Boolean @default(false)
+
+  estimatedArrival DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Route {
+  id                   String  @id @default(uuid())
+  origin               String
+  destination          String
+  distanceKm           Float
+  estimatedTimeMinutes Int
+  riskLevel            String?
+  fuelCost             Float?
+  tollCost             Float?
+
+  createdAt DateTime @default(now())
+
+  stops     RouteStop[]
+  shipments Shipment[]
+}
+
+model RouteStop {
+  id String @id @default(uuid())
+
+  routeId String
+  route   Route @relation(fields: [routeId], references: [id])
+
+  location  String
+  stopOrder Int
+}
+
+model AIResult {
+  id   String @id @default(uuid())
+  type AIType
+  result Json
+
+  produceId String?
+  produce   Produce? @relation(fields: [produceId], references: [id])
+
+  deliveryId String?
+  delivery   Delivery? @relation(fields: [deliveryId], references: [id])
+  createdAt  DateTime  @default(now())
+}
+
+model Alert {
+  id             String  @id @default(uuid())
+  type           String
+  message        String
+  recommendation String?
+  severity       String
+
+  userId String?
+  user   User?  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  message String
+  read    Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+model Wallet {
+  id String @id @default(uuid())
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  balance  Float  @default(0)
+  currency String @default("NGN")
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id String @id @default(uuid())
+
+  walletId String
+  wallet   Wallet @relation(fields: [walletId], references: [id])
+
+  type        TransactionType
+  amount      Float
+  description String?
+  reference   String? @unique
+
+  createdAt DateTime @default(now())
+}
+
+model CartItem {
+  id String @id @default(uuid())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  produceId String
+  produce   Produce @relation(fields: [produceId], references: [id])
+
+  quantity Float
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, produceId])
+}
+
+enum DeliveryStatus {
+  PENDING
+  ASSIGNED
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+  ASSIGNED_TO_TRANSPORT
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum ShipmentStatus {
+  PENDING
+  TRANSPORTER_ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  CANCELLED
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+  PAYMENT
+  REFUND
+}
+
+enum AIType {
+  FRESHNESS
+  ROUTE
+  DISPATCH
+  VEHICLE
+  CARGO_RISK
+  SUPPLY_INSIGHT
+  SHIPMENT_INSIGHT
+}
