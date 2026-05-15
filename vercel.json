@@ -1,0 +1,5 @@
+{
+  "outputDirectory": "build/web",
+  "buildCommand": "echo 'Using pre-built files'",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
