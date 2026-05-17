@@ -190,7 +190,7 @@ class CropScreen extends StatelessWidget {
 
   Widget _produceCard(ProduceModel produce) {
     final stage = _getGrowthStage(produce);
-    final stageColor = _getStageColor(stage);
+    final stageColor = _getStageColor(produce);
     final healthScore = produce.freshnessScore ?? 0;
 
     return Container(
@@ -210,7 +210,7 @@ class CropScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Name + Badge
+          /// Name + Badge + Edit
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -251,24 +251,45 @@ class CropScreen extends StatelessWidget {
                 ],
               ),
 
-              /// Growth Stage Badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: stageColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  stage,
-                  style: TextStyle(
-                    color: stageColor,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  /// Growth Stage Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: stageColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      stage,
+                      style: TextStyle(
+                        color: stageColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  /// Edit Button
+                  GestureDetector(
+                    onTap: () => _showEditProduceDialog(Get.context!, produce),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Color(0xFF1B5E20),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -383,7 +404,8 @@ class CropScreen extends StatelessWidget {
     return "Harvest Ready";
   }
 
-  Color _getStageColor(String stage) {
+  Color _getStageColor(ProduceModel produce) {
+    final stage = _getGrowthStage(produce);
     switch (stage) {
       case "Germination":
         return const Color(0xFF1565C0);
@@ -590,6 +612,221 @@ class CropScreen extends StatelessWidget {
                           ),
                           child: const Text(
                             "Add Crop",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditProduceDialog(BuildContext context, ProduceModel produce) {
+    final nameCtrl = TextEditingController(text: produce.name);
+    final quantityCtrl = TextEditingController(
+      text: produce.quantity.toString(),
+    );
+    String selectedUnit = produce.unit;
+    DateTime? harvestDate = produce.harvestDate != null
+        ? DateTime.tryParse(produce.harvestDate!)
+        : null;
+    DateTime? expiryDate = produce.expiryDate != null
+        ? DateTime.tryParse(produce.expiryDate!)
+        : null;
+
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Edit Crop",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(
+                      hintText: "Crop name (e.g., Tomato, Maize)",
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF1B5E20),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: quantityCtrl,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            hintText: "Quantity",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF1B5E20),
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      DropdownButton<String>(
+                        value: ['kg', 'bags', 'tons', 'units', 'Hectares']
+                                .contains(selectedUnit)
+                            ? selectedUnit
+                            : 'kg',
+                        items: ['kg', 'bags', 'tons', 'units', 'Hectares']
+                            .map(
+                              (u) => DropdownMenuItem(
+                                value: u,
+                                child: Text(u),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (v) =>
+                            setState(() => selectedUnit = v ?? 'kg'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: harvestDate ?? DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime.now(),
+                            );
+                            if (date != null)
+                              setState(() => harvestDate = date);
+                          },
+                          icon: const Icon(Icons.calendar_today, size: 16),
+                          label: Text(
+                            harvestDate == null
+                                ? "Planted"
+                                : harvestDate.toString().substring(0, 10),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black87,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final date = await showDatePicker(
+                              context: context,
+                              initialDate: expiryDate ??
+                                  DateTime.now().add(
+                                    const Duration(days: 90),
+                                  ),
+                              firstDate: DateTime.now(),
+                              lastDate: DateTime(2030),
+                            );
+                            if (date != null)
+                              setState(() => expiryDate = date);
+                          },
+                          icon: const Icon(Icons.calendar_today, size: 16),
+                          label: Text(
+                            expiryDate == null
+                                ? "Harvest"
+                                : expiryDate.toString().substring(0, 10),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.black87,
+                            side: BorderSide(color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text("Cancel"),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (nameCtrl.text.isNotEmpty &&
+                                quantityCtrl.text.isNotEmpty) {
+                              controller.editProduce(
+                                produceId: produce.id,
+                                name: nameCtrl.text,
+                                quantity:
+                                    double.tryParse(quantityCtrl.text) ?? 0,
+                                unit: selectedUnit,
+                                harvestDate: harvestDate
+                                    ?.toIso8601String()
+                                    .substring(0, 10),
+                                expiryDate: expiryDate
+                                    ?.toIso8601String()
+                                    .substring(0, 10),
+                              );
+                              Get.back();
+                            } else {
+                              AppSnackbar.error(
+                                  'Please fill in all required fields');
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1B5E20),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            "Save Changes",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

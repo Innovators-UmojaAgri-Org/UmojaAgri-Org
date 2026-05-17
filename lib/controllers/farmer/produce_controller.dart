@@ -50,8 +50,7 @@ class ProduceController extends GetxController {
       // print('=== END FARMER PRODUCES ===\n');
 
       if (res.statusCode == 200) {
-        final response = jsonDecode(res.body);
-        final data = response['data'] as List? ?? [];
+        final data = jsonDecode(res.body) as List? ?? [];
         produces.assignAll(
           data.map(
             (p) => ProduceModel(

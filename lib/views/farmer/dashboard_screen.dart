@@ -460,7 +460,7 @@ class DashboardScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _navItem(Icons.home_rounded, "Home", 0),
-          _navItem(Icons.eco_rounded, "Crop", 1),
+          _navItem(Icons.eco_rounded, "Marketplace", 1),
           _navItem(Icons.local_shipping_rounded, "Shipment", 2),
           _navItem(Icons.account_balance_wallet_rounded, "Finance", 3),
         ],
