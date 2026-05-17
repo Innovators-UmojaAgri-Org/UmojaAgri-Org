@@ -5,7 +5,6 @@ import 'package:umoja_agri/views/onboarding/role_selection.dart';
 import 'package:umoja_agri/views/onboarding/sign_in.dart';
 import 'package:umoja_agri/views/onboarding/sign_up.dart';
 import 'package:umoja_agri/views/onboarding/splash_screen.dart';
-import 'package:umoja_agri/views/onboarding/language_selection_screen.dart';
 import 'package:umoja_agri/views/onboarding/onboarding_screen.dart';
 import 'package:umoja_agri/views/transporter/dashboard_transporter_screen.dart';
 import 'package:umoja_agri/views/transporter/AIroute_screen.dart';
@@ -16,7 +15,6 @@ import 'package:umoja_agri/bindings/marketer_binding.dart';
 
 class AppRoutes {
   static const String splash = '/';
-  static const String languageSelection = '/language-selection';
   static const String onboarding = '/onboarding';
   static const String home = '/home';
   static const String roleSelection = '/role-selection';
@@ -32,11 +30,6 @@ class AppRoutes {
 
   static final routes = [
     GetPage(name: splash, page: () => const SplashScreen()),
-    GetPage(
-      name: languageSelection,
-      page: () => LanguageSelectionScreen(),
-      transition: Transition.fadeIn,
-    ),
     GetPage(
       name: onboarding,
       page: () => OnboardingScreen(),

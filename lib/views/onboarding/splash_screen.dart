@@ -32,7 +32,7 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateAway() async {
     // Fade out before navigating
     await _controller.reverse();
-    Get.offNamed('/language-selection');
+    Get.offNamed('/onboarding');
   }
 
   @override
