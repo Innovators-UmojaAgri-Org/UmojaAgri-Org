@@ -108,32 +108,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   );
                 }),
-                const SizedBox(height: 16),
-
-                Center(
-                  child: Text.rich(
-                    TextSpan(
-                      text: "By continuing you agree to our ",
-                      style: const TextStyle(fontSize: 12),
-                      children: const [
-                        TextSpan(
-                          text: "Terms of Service",
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                        TextSpan(text: " and "),
-                        TextSpan(
-                          text: "Privacy Policy.",
-                          style: TextStyle(
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
 
                 const SizedBox(height: 40),
                 Obx(() {

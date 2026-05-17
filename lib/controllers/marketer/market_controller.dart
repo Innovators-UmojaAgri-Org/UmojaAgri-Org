@@ -7,6 +7,7 @@ import 'package:umoja_agri/services/order_service.dart';
 import 'package:umoja_agri/services/produce_service.dart';
 import 'package:umoja_agri/services/delivery_service.dart';
 import 'package:umoja_agri/services/cart_service.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class MarketerController extends GetxController {
   final currentIndex = 0.obs;
@@ -225,12 +226,12 @@ class MarketerController extends GetxController {
       );
       if (res.statusCode == 200 || res.statusCode == 201) {
         await loadCart();
-        Get.snackbar('Success', 'Added to cart');
+        AppSnackbar.success('Added to cart');
       } else {
-        Get.snackbar('Error', 'Failed to add to cart');
+        AppSnackbar.error('Failed to add to cart');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add to cart: $e');
+      AppSnackbar.error('Failed to add to cart: $e');
     }
   }
 
@@ -245,10 +246,10 @@ class MarketerController extends GetxController {
       if (res.statusCode == 200) {
         await loadCart();
       } else {
-        Get.snackbar('Error', 'Failed to update cart');
+        AppSnackbar.error('Failed to update cart');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update cart: $e');
+      AppSnackbar.error('Failed to update cart: $e');
     }
   }
 
@@ -258,12 +259,12 @@ class MarketerController extends GetxController {
       final res = await CartService().removeCartItem(token, produceId);
       if (res.statusCode == 200) {
         await loadCart();
-        Get.snackbar('Success', 'Removed from cart');
+        AppSnackbar.success('Removed from cart');
       } else {
-        Get.snackbar('Error', 'Failed to remove from cart');
+        AppSnackbar.error('Failed to remove from cart');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to remove from cart: $e');
+      AppSnackbar.error('Failed to remove from cart: $e');
     }
   }
 
@@ -273,12 +274,12 @@ class MarketerController extends GetxController {
       final res = await CartService().clearCart(token);
       if (res.statusCode == 200) {
         cartItems.clear();
-        Get.snackbar('Success', 'Cart cleared');
+        AppSnackbar.success('Cart cleared');
       } else {
-        Get.snackbar('Error', 'Failed to clear cart');
+        AppSnackbar.error('Failed to clear cart');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to clear cart: $e');
+      AppSnackbar.error('Failed to clear cart: $e');
     }
   }
 
@@ -299,13 +300,13 @@ class MarketerController extends GetxController {
      
       if (res.statusCode == 200 || res.statusCode == 201) {
         await _loadData(); // Refresh orders
-        Get.snackbar('Success', 'Order placed successfully');
+        AppSnackbar.success('Order placed successfully');
        
       } else {
-        Get.snackbar('Error', 'Failed to place order');
+        AppSnackbar.error('Failed to place order');
       }
     } catch (e, stackTrace) {
-      Get.snackbar('Error', 'Failed to place order: $e');
+      AppSnackbar.error('Failed to place order: $e');
     }
   }
 

@@ -157,7 +157,7 @@ class _SignInScreenState extends State<SignInScreen> {
         onPressed: () async {
           await authCtrl.login();
         },
-        child: Text(text, style: const TextStyle(fontSize: 16)),
+        child: Text(text, style: const TextStyle(fontSize: 16, color: Colors.white)),
       ),
     );
   }

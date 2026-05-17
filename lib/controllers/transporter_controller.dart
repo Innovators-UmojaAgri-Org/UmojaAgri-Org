@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../models/transporter_model.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class TransporterController extends GetxController {
   var isLoading = false.obs;
@@ -110,11 +111,7 @@ class TransporterController extends GetxController {
 
   void keepCurrentRoute() {
    
-    Get.snackbar(
-      'Route kept',
-      'You have chosen to keep the current route',
-      snackPosition: SnackPosition.BOTTOM,
-    );
+    AppSnackbar.info('You have chosen to keep the current route', title: 'Route kept');
   }
 
   void showSuccessModal() {

@@ -59,25 +59,29 @@ class RoleSelectionScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  GestureDetector(
+                  _buildPrimaryButton(
+                    text: "Sign in as a Market Seller",
+                    backgroundColor: AppColors.primaryBlue,
                     onTap: () {
                       final auth = Get.put(AuthController());
                       auth.selectedRole.value = RoleIds.marketer;
                       Get.toNamed('/sign-in');
                     },
-                    child: const Text(
-                      "Sign in as a Market Seller",
-                      style: TextStyle(color: Colors.white),
-                    ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  GestureDetector(
-                    onTap: () => Get.toNamed('/sign-up'),
-                    child: const Text(
-                      "Don’t have an account? Sign up",
-                      style: TextStyle(color: Colors.white),
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => Get.toNamed('/sign-up'),
+                      child: const Text(
+                        "Don't have an account? Sign Up",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
 
@@ -94,13 +98,14 @@ class RoleSelectionScreen extends StatelessWidget {
   Widget _buildPrimaryButton({
     required String text,
     required VoidCallback onTap,
+    Color backgroundColor = AppColors.primaryOrange,
   }) {
     return SizedBox(
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryOrange,
+          backgroundColor: backgroundColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

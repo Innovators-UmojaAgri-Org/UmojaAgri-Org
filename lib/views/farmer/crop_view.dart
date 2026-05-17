@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:umoja_agri/controllers/farmer/produce_controller.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class CropScreen extends StatelessWidget {
   CropScreen({super.key});
@@ -577,10 +578,7 @@ class CropScreen extends StatelessWidget {
                               );
                               Get.back();
                             } else {
-                              Get.snackbar(
-                                'Error',
-                                'Please fill in all required fields',
-                              );
+                              AppSnackbar.error('Please fill in all required fields');
                             }
                           },
                           style: ElevatedButton.styleFrom(

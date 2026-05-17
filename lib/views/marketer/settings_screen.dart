@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:umoja_agri/utils/app_colors.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -27,20 +28,20 @@ class SettingsScreen extends StatelessWidget {
                   _SettingItem(
                     icon: Icons.person,
                     label: 'Profile',
-                    onTap: () => Get.snackbar('Profile', 'Profile tapped'),
+                    onTap: () => AppSnackbar.info('Profile tapped', title: 'Profile'),
                   ),
                   _SettingItem(
                     icon: Icons.lock,
                     label: 'Change Password',
                     onTap:
                         () =>
-                            Get.snackbar('Password', 'Change password tapped'),
+                            AppSnackbar.info('Change password tapped', title: 'Password'),
                   ),
                   _SettingItem(
                     icon: Icons.email,
                     label: 'Email & Phone',
                     onTap:
-                        () => Get.snackbar('Contact', 'Email & Phone tapped'),
+                        () => AppSnackbar.info('Email & Phone tapped', title: 'Contact'),
                   ),
                 ],
               ),
@@ -51,15 +52,12 @@ class SettingsScreen extends StatelessWidget {
                     icon: Icons.notifications,
                     label: 'Notifications',
                     onTap:
-                        () => Get.snackbar(
-                          'Notifications',
-                          'Notifications tapped',
-                        ),
+                        () => AppSnackbar.info('Notifications tapped', title: 'Notifications'),
                   ),
                   _SettingItem(
                     icon: Icons.language,
                     label: 'Language',
-                    onTap: () => Get.snackbar('Language', 'Language tapped'),
+                    onTap: () => AppSnackbar.info('Language tapped', title: 'Language'),
                   ),
                 ],
               ),
@@ -69,12 +67,12 @@ class SettingsScreen extends StatelessWidget {
                   _SettingItem(
                     icon: Icons.help,
                     label: 'Help & Support',
-                    onTap: () => Get.snackbar('Help', 'Help & Support tapped'),
+                    onTap: () => AppSnackbar.info('Help & Support tapped', title: 'Help'),
                   ),
                   _SettingItem(
                     icon: Icons.info,
                     label: 'About',
-                    onTap: () => Get.snackbar('About', 'About tapped'),
+                    onTap: () => AppSnackbar.info('About tapped', title: 'About'),
                   ),
                 ],
               ),

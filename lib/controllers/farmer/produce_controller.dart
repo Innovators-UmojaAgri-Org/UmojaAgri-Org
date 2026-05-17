@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/services/produce_service.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class ProduceModel {
   final String id;
@@ -109,16 +110,16 @@ class ProduceController extends GetxController {
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         await loadMyProduces();
-        Get.snackbar('Success', 'Produce added successfully');
+        AppSnackbar.success('Produce added successfully');
         //print('Produce created and list refreshed');
       } else {
         // print('Create produce API returned status: ${res.statusCode}');
-        Get.snackbar('Error', 'Failed to add produce');
+        AppSnackbar.error('Failed to add produce');
       }
     } catch (e, stackTrace) {
       // print('✗ Error creating produce: $e');
       // print('Stack trace: $stackTrace');
-      Get.snackbar('Error', 'Failed to add produce: $e');
+      AppSnackbar.error('Failed to add produce: $e');
     }
   }
 
@@ -153,12 +154,12 @@ class ProduceController extends GetxController {
       );
       if (res.statusCode == 200) {
         await loadMyProduces();
-        Get.snackbar('Success', 'Produce updated successfully');
+        AppSnackbar.success('Produce updated successfully');
       } else {
-        Get.snackbar('Error', 'Failed to update produce');
+        AppSnackbar.error('Failed to update produce');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update produce: $e');
+      AppSnackbar.error('Failed to update produce: $e');
     }
   }
 
@@ -168,12 +169,12 @@ class ProduceController extends GetxController {
       final res = await ProduceService().deleteProduce(token, produceId);
       if (res.statusCode == 200) {
         await loadMyProduces();
-        Get.snackbar('Success', 'Produce deleted successfully');
+        AppSnackbar.success('Produce deleted successfully');
       } else {
-        Get.snackbar('Error', 'Failed to delete produce');
+        AppSnackbar.error('Failed to delete produce');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete produce: $e');
+      AppSnackbar.error('Failed to delete produce: $e');
     }
   }
 }

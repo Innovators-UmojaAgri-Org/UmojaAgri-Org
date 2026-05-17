@@ -6,6 +6,7 @@ import '../../models/transporter_model.dart';
 import '../../services/shipment_service.dart';
 import '../../controllers/farmer/shipment_controller.dart';
 import 'dart:convert';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class TransporterSelectionScreen extends StatefulWidget {
   final ShipmentModel shipment;
@@ -78,11 +79,11 @@ class _TransporterSelectionScreenState
         // Success, show dialog and navigate back
         _showConfirmationDialog(context, t);
       } else {
-        Get.snackbar('Error', 'Failed to select transporter');
+        AppSnackbar.error('Failed to select transporter');
       }
     } catch (e) {
       print('Error selecting transporter: $e');
-      Get.snackbar('Error', 'Failed to select transporter');
+      AppSnackbar.error('Failed to select transporter');
     }
   }
 

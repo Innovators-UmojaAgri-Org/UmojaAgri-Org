@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/services/auth_service.dart';
 import 'package:umoja_agri/utils/constants.dart';
 import 'package:umoja_agri/utils/app_routes.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 import 'package:umoja_agri/controllers/farmer/dashboard_controller.dart';
 import 'package:umoja_agri/controllers/transporter/transporter_controller.dart';
 import 'package:umoja_agri/controllers/marketer/market_controller.dart';
@@ -32,7 +33,7 @@ class AuthController extends GetxController {
     final password = passwordCtrl.text.trim();
     final name = nameCtrl.text.trim();
     if (email.isEmpty || password.isEmpty || name.isEmpty) {
-      Get.snackbar('Error', 'All fields are required');
+      AppSnackbar.error('All fields are required');
       return;
     }
     isLoading.value = true;
@@ -47,17 +48,14 @@ class AuthController extends GetxController {
         emailCtrl.clear();
         passwordCtrl.clear();
         nameCtrl.clear();
-        Get.snackbar('Success', 'Account created, please sign in');
+        AppSnackbar.success('Account created, please sign in');
         Get.offAllNamed(AppRoutes.sign_in);
       } else {
         final body = jsonDecode(res.body);
-        Get.snackbar(
-          'Registration failed',
-          body['message'] ?? res.reasonPhrase,
-        );
+        AppSnackbar.error(body['message'] ?? res.reasonPhrase, title: 'Registration failed');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not register. Please try again.');
+      AppSnackbar.error('Could not register. Please try again.');
     } finally {
       isLoading.value = false;
     }
@@ -67,7 +65,7 @@ class AuthController extends GetxController {
     final email = emailCtrl.text.trim();
     final password = passwordCtrl.text.trim();
     if (email.isEmpty || password.isEmpty) {
-      Get.snackbar('Error', 'Email and password required');
+      AppSnackbar.error('Email and password required');
       return;
     }
     isLoading.value = true;
@@ -116,10 +114,10 @@ class AuthController extends GetxController {
         }
       } else {
         final body = jsonDecode(res.body);
-        Get.snackbar('Login failed', body['message'] ?? res.reasonPhrase);
+        AppSnackbar.error(body['message'] ?? res.reasonPhrase, title: 'Login failed');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not login. Please try again.');
+      AppSnackbar.error('Could not login. Please try again.');
     } finally {
       isLoading.value = false;
     }

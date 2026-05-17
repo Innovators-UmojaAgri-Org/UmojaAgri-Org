@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:umoja_agri/controllers/marketer/market_controller.dart';
 import 'package:umoja_agri/models/marketer/marketer_model.dart';
 import 'package:umoja_agri/utils/app_colors.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 import 'package:umoja_agri/views/marketer/my_order_screen.dart';
 import 'package:umoja_agri/views/marketer/finance_screen.dart';
 import 'package:umoja_agri/views/marketer/settings_screen.dart';
@@ -567,15 +568,7 @@ class _ProduceCard extends StatelessWidget {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed:
-                        () => Get.snackbar(
-                          'Order Placed',
-                          'Added ${p.name} to your order',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: AppTheme.primary,
-                          colorText: Colors.white,
-                          margin: const EdgeInsets.all(12),
-                          borderRadius: 10,
-                        ),
+                        () => AppSnackbar.success('Added ${p.name} to your order', title: 'Order Placed'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.orderButton,
                       foregroundColor: Colors.white,

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/services/finance_service.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class WalletModel {
   final String id;
@@ -107,12 +108,12 @@ class FinanceController extends GetxController {
       );
       if (res.statusCode == 200 || res.statusCode == 201) {
         await loadWallet();
-        Get.snackbar('Success', 'Wallet funded successfully');
+        AppSnackbar.success('Wallet funded successfully');
       } else {
-        Get.snackbar('Error', 'Failed to fund wallet');
+        AppSnackbar.error('Failed to fund wallet');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fund wallet: $e');
+      AppSnackbar.error('Failed to fund wallet: $e');
     }
   }
 
@@ -132,12 +133,12 @@ class FinanceController extends GetxController {
       if (res.statusCode == 200) {
         await loadWallet();
         await loadTransactions();
-        Get.snackbar('Success', 'Payment made successfully');
+        AppSnackbar.success('Payment made successfully');
       } else {
-        Get.snackbar('Error', 'Failed to make payment');
+        AppSnackbar.error('Failed to make payment');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to make payment: $e');
+      AppSnackbar.error('Failed to make payment: $e');
     }
   }
 }

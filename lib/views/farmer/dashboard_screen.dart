@@ -186,7 +186,7 @@ class DashboardScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   _statCard(
-                    "Total Crops",
+                    "Total Listings",
                     data.totalCrops.toString(),
                     Icons.eco_outlined,
                     const Color(0xFF2E7D32),
@@ -242,7 +242,7 @@ class DashboardScreen extends StatelessWidget {
                 childAspectRatio: isWide ? 4.0 : 2.2,
                 children: [
                   _ActivityCard(
-                    title: "New Crop",
+                    title: "My listings",
                     icon: Icons.eco,
                     iconColor: const Color(0xFF2E7D32),
                     bgColor: const Color(0xFFE2EDD4),
