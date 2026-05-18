@@ -134,6 +134,53 @@ async function getRecommendedTransporter(shipmentId) {
   };
 }
 
+async function getShipmentsByTransporter(transporterId) {
+  return prisma.shipment.findMany({
+    where: { transporterId },
+    include: {
+      farmer: { select: { id: true, name: true, location: true } },
+      route: {
+        select: { origin: true, destination: true, distanceKm: true, estimatedTimeMinutes: true },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+}
+
+async function acceptShipment(shipmentId, transporterId) {
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error('Shipment not found');
+  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
+  if (shipment.status !== 'TRANSPORTER_ASSIGNED') throw new Error('Shipment is not awaiting acceptance');
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { status: 'PICKED_UP' },
+  });
+}
+
+async function declineShipment(shipmentId, transporterId) {
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error('Shipment not found');
+  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
+  if (shipment.status !== 'TRANSPORTER_ASSIGNED') throw new Error('Shipment cannot be declined at this stage');
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { status: 'PENDING', transporterId: null },
+  });
+}
+
+async function updateShipmentStatusByTransporter(shipmentId, transporterId, status) {
+  const allowed = ['IN_TRANSIT', 'DELIVERED'];
+  if (!allowed.includes(status)) throw new Error('Invalid status');
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error('Shipment not found');
+  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { status },
+  });
+}
+
 module.exports = {
   createShipment,
   getShipmentsByFarmer,
@@ -141,4 +188,8 @@ module.exports = {
   getShipmentById,
   selectTransporter,
   getRecommendedTransporter,
+  getShipmentsByTransporter,
+  acceptShipment,
+  declineShipment,
+  updateShipmentStatusByTransporter,
 };

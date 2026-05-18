@@ -9,7 +9,7 @@ class MyOrderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.find<MarketerController>();
+    final ctrl = Get.isRegistered<MarketerController>() ? Get.find<MarketerController>() : Get.put(MarketerController());
 
     return Scaffold(
       backgroundColor: AppTheme.background,

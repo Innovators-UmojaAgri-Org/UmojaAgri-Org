@@ -9,6 +9,10 @@ const {
   getShipment,
   selectTransporter,
   getRecommendedTransporter,
+  listMyJobs,
+  acceptJob,
+  declineJob,
+  updateJobStatus,
 } = require("./shipmentsController");
 
 /**
@@ -125,5 +129,10 @@ router.get("/:shipmentId/recommendations", auth, role(["FARMER"]), getRecommende
  *         description: Transporter assigned
  */
 router.post("/select-transporter", auth, role(["FARMER"]), selectTransporter);
+
+router.get("/my-jobs", auth, role(["TRANSPORTER"]), listMyJobs);
+router.patch("/:id/accept", auth, role(["TRANSPORTER"]), acceptJob);
+router.patch("/:id/decline", auth, role(["TRANSPORTER"]), declineJob);
+router.patch("/:id/status", auth, role(["TRANSPORTER"]), updateJobStatus);
 
 module.exports = router;

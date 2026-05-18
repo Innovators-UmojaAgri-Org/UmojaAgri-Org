@@ -6,6 +6,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:umoja_agri/models/transporter/transporter_model.dart';
 import 'package:umoja_agri/services/transport_service.dart';
 import 'package:umoja_agri/services/dashboard_service.dart';
+import 'package:umoja_agri/utils/app_snackbar.dart';
 
 class TransporterController extends GetxController {
   final Rx<Transporter?> transporter = Rx<Transporter?>(null);
@@ -14,6 +15,8 @@ class TransporterController extends GetxController {
   final RxString errorMessage = ''.obs;
   final RxInt selectedTabIndex = 0.obs;
   final routeRecommendations = <RouteRecommendation>[].obs;
+  final assignedJobs = <Map<String, dynamic>>[].obs;
+  final RxBool isLoadingJobs = false.obs;
   final _box = GetStorage();
   List<Shipment> get activeShipments =>
       transporter.value?.shipments
@@ -64,6 +67,7 @@ class TransporterController extends GetxController {
   void onInit() {
     super.onInit();
     loadTransporterData();
+    loadMyJobs();
   }
 
   bool isDataReady() {
@@ -364,6 +368,67 @@ class TransporterController extends GetxController {
         return ShipmentStatus.cancelled;
       default:
         return ShipmentStatus.pending;
+    }
+  }
+
+  Future<void> loadMyJobs() async {
+    isLoadingJobs.value = true;
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await TransportService().getMyJobs(token);
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        assignedJobs.assignAll(
+          List<Map<String, dynamic>>.from(body['data'] ?? []),
+        );
+      }
+    } catch (_) {} finally {
+      isLoadingJobs.value = false;
+    }
+  }
+
+  Future<void> acceptJob(String shipmentId) async {
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await TransportService().acceptJob(token, shipmentId);
+      if (res.statusCode == 200) {
+        AppSnackbar.success('Job accepted');
+        await loadMyJobs();
+      } else {
+        AppSnackbar.error('Failed to accept job');
+      }
+    } catch (_) {
+      AppSnackbar.error('Failed to accept job');
+    }
+  }
+
+  Future<void> declineJob(String shipmentId) async {
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await TransportService().declineJob(token, shipmentId);
+      if (res.statusCode == 200) {
+        AppSnackbar.info('Job declined');
+        await loadMyJobs();
+      } else {
+        AppSnackbar.error('Failed to decline job');
+      }
+    } catch (_) {
+      AppSnackbar.error('Failed to decline job');
+    }
+  }
+
+  Future<void> updateJobStatus(String shipmentId, String status) async {
+    try {
+      final token = _box.read('token') ?? '';
+      final res = await TransportService().updateJobStatus(token, shipmentId, status);
+      if (res.statusCode == 200) {
+        AppSnackbar.success('Status updated');
+        await loadMyJobs();
+      } else {
+        AppSnackbar.error('Failed to update status');
+      }
+    } catch (_) {
+      AppSnackbar.error('Failed to update status');
     }
   }
 
