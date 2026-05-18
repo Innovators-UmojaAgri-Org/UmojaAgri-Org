@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
@@ -6,6 +7,8 @@ import 'package:umoja_agri/views/farmer/crop_view.dart';
 import 'package:umoja_agri/views/farmer/ship_view.dart';
 import 'package:umoja_agri/views/farmer/finance_view.dart';
 import '../../controllers/farmer/dashboard_controller.dart';
+import '../../controllers/auth_controller.dart';
+import '../../services/auth_service.dart';
 
 class DashboardScreen extends StatelessWidget {
   DashboardScreen({Key? key}) : super(key: key);
@@ -49,13 +52,16 @@ class DashboardScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.grey.shade300,
-                        child: const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 22,
+                      GestureDetector(
+                        onTap: () => _showProfileSheet(context),
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: const Color(0xFF2E7D32),
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 22,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -501,6 +507,18 @@ class DashboardScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showProfileSheet(BuildContext context) {
+    final box = GetStorage();
+    final token = box.read('token') ?? '';
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ProfileSheet(token: token),
+    );
+  }
 }
 
 class _ActivityCard extends StatelessWidget {
@@ -556,6 +574,174 @@ class _ActivityCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileSheet extends StatefulWidget {
+  final String token;
+  const _ProfileSheet({required this.token});
+
+  @override
+  State<_ProfileSheet> createState() => _ProfileSheetState();
+}
+
+class _ProfileSheetState extends State<_ProfileSheet> {
+  Map<String, dynamic>? profile;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final res = await AuthService().getProfile(widget.token);
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        setState(() {
+          profile = body['data'];
+          loading = false;
+        });
+      } else {
+        setState(() => loading = false);
+      }
+    } catch (_) {
+      setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Avatar
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: const Color(0xFF2E7D32),
+            child: Text(
+              loading || profile == null
+                  ? '?'
+                  : (profile!['name'] as String? ?? '?')[0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            )
+          else if (profile == null)
+            const Text('Could not load profile')
+          else ...[
+            Text(
+              profile!['name'] ?? '—',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              profile!['role']?['name'] ?? '—',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey.shade500,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 8),
+            _profileRow(Icons.email_outlined, 'Email', profile!['email']),
+            _profileRow(Icons.phone_outlined, 'Phone', profile!['phone']),
+            _profileRow(Icons.location_on_outlined, 'Location', profile!['location']),
+            _profileRow(
+              Icons.calendar_today_outlined,
+              'Joined',
+              profile!['createdAt'] != null
+                  ? profile!['createdAt'].toString().substring(0, 10)
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  Get.put(AuthController()).logout();
+                },
+                icon: const Icon(Icons.logout, size: 18, color: Colors.red),
+                label: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.red),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _profileRow(IconData icon, String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF2E7D32)),
+          const SizedBox(width: 12),
+          Text(
+            '$label:',
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value ?? 'Not set',
+              style: TextStyle(
+                fontSize: 13,
+                color: value != null ? Colors.black87 : Colors.grey.shade400,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
       ),
     );
   }

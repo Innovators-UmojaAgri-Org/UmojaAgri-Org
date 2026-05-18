@@ -66,6 +66,47 @@ async function getRecommendedTransporter(req, res) {
   }
 }
 
+async function listMyJobs(req, res) {
+  try {
+    const shipments = await shipmentsService.getShipmentsByTransporter(req.user.userId);
+    res.json({ success: true, count: shipments.length, data: shipments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function acceptJob(req, res) {
+  try {
+    const shipment = await shipmentsService.acceptShipment(req.params.id, req.user.userId);
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function declineJob(req, res) {
+  try {
+    const shipment = await shipmentsService.declineShipment(req.params.id, req.user.userId);
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function updateJobStatus(req, res) {
+  try {
+    const { status } = req.body;
+    const shipment = await shipmentsService.updateShipmentStatusByTransporter(
+      req.params.id,
+      req.user.userId,
+      status
+    );
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 module.exports = {
   createShipment,
   listShipments,
@@ -73,4 +114,8 @@ module.exports = {
   getShipment,
   selectTransporter,
   getRecommendedTransporter,
+  listMyJobs,
+  acceptJob,
+  declineJob,
+  updateJobStatus,
 };

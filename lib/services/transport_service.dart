@@ -73,4 +73,31 @@ class TransportService {
       }),
     );
   }
+
+  Future<http.Response> getMyJobs(String token) {
+    final uri = Uri.parse('$_baseUrl/api/shipments/my-jobs');
+    return http.get(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> acceptJob(String token, String shipmentId) {
+    final uri = Uri.parse('$_baseUrl/api/shipments/$shipmentId/accept');
+    return http.patch(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> declineJob(String token, String shipmentId) {
+    final uri = Uri.parse('$_baseUrl/api/shipments/$shipmentId/decline');
+    return http.patch(uri, headers: {'Authorization': 'Bearer $token'});
+  }
+
+  Future<http.Response> updateJobStatus(String token, String shipmentId, String status) {
+    final uri = Uri.parse('$_baseUrl/api/shipments/$shipmentId/status');
+    return http.patch(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'status': status}),
+    );
+  }
 }

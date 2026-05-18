@@ -1,9 +1,13 @@
 // views/transporter/transporter_screen.dart
 
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:umoja_agri/controllers/auth_controller.dart';
 import 'package:umoja_agri/controllers/transporter/transporter_controller.dart';
 import 'package:umoja_agri/models/transporter/transporter_model.dart';
+import 'package:umoja_agri/services/auth_service.dart';
 import 'package:umoja_agri/utils/app_colors.dart';
 import 'package:umoja_agri/utils/app_routes.dart';
 
@@ -72,6 +76,8 @@ class _TransporterScreenState extends State<TransporterScreen> {
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            _JobsSection(ctrl: ctrl),
+            const SizedBox(height: 20),
             _ActiveShipmentCard(ctrl: ctrl),
             const SizedBox(height: 16),
             _StatusSelector(ctrl: ctrl),
@@ -99,14 +105,27 @@ class _TransporterScreenState extends State<TransporterScreen> {
         return Row(
           children: [
             // Avatar
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color.fromRGBO(0, 201, 80, 1),
-              child: Text(
-                initial,
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
+            GestureDetector(
+              onTap: () {
+                final box = GetStorage();
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => _TransporterProfileSheet(
+                    token: box.read('token') ?? '',
+                  ),
+                );
+              },
+              child: CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color.fromRGBO(0, 201, 80, 1),
+                child: Text(
+                  initial,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -600,5 +619,367 @@ class _BottomNav extends StatelessWidget {
         ],
       );
     });
+  }
+}
+
+class _JobsSection extends StatelessWidget {
+  final TransporterController ctrl;
+  const _JobsSection({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      if (ctrl.isLoadingJobs.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final jobs = ctrl.assignedJobs;
+      if (jobs.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Incoming Jobs',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          ...jobs.map((job) => _JobCard(job: job, ctrl: ctrl)).toList(),
+        ],
+      );
+    });
+  }
+}
+
+class _JobCard extends StatelessWidget {
+  final Map<String, dynamic> job;
+  final TransporterController ctrl;
+  const _JobCard({required this.job, required this.ctrl});
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'TRANSPORTER_ASSIGNED': return const Color(0xFFF59E0B);
+      case 'PICKED_UP': return const Color(0xFF3B82F6);
+      case 'IN_TRANSIT': return const Color(0xFF8B5CF6);
+      case 'DELIVERED': return const Color(0xFF16A34A);
+      default: return Colors.grey;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'TRANSPORTER_ASSIGNED': return 'Awaiting Acceptance';
+      case 'PICKED_UP': return 'Picked Up';
+      case 'IN_TRANSIT': return 'In Transit';
+      case 'DELIVERED': return 'Delivered';
+      default: return status;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final status = job['status'] as String? ?? '';
+    final farmer = job['farmer'] as Map<String, dynamic>?;
+    final route = job['route'] as Map<String, dynamic>?;
+    final origin = route?['origin'] ?? farmer?['location'] ?? 'Origin';
+    final destination = job['destination'] ?? route?['destination'] ?? 'Destination';
+    final cargo = job['cargo'] ?? 'Cargo';
+    final weight = job['weight']?.toString() ?? '0';
+    final weightUnit = job['weightUnit'] ?? 'kg';
+    final price = (job['price'] ?? 0).toDouble();
+    final farmerName = farmer?['name'] ?? 'Farmer';
+    final statusColor = _statusColor(status);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                cargo,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _statusLabel(status),
+                  style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text(farmerName, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              const SizedBox(width: 16),
+              const Icon(Icons.scale_outlined, size: 14, color: Colors.grey),
+              const SizedBox(width: 4),
+              Text('$weight $weightUnit', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              const Icon(Icons.arrow_forward, size: 14, color: Color(0xFF2E7D32)),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '$origin → $destination',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                '₦${price.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2E7D32),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildActions(job['id'] as String, status),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(String id, String status) {
+    if (status == 'TRANSPORTER_ASSIGNED') {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => ctrl.declineJob(id),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Decline'),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => ctrl.acceptJob(id),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('Accept', style: TextStyle(color: Colors.white)),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (status == 'PICKED_UP') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => ctrl.updateJobStatus(id, 'IN_TRANSIT'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF8B5CF6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: const Text('Mark In Transit', style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
+
+    if (status == 'IN_TRANSIT') {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: () => ctrl.updateJobStatus(id, 'DELIVERED'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF16A34A),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: const Text('Mark Delivered', style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+}
+
+class _TransporterProfileSheet extends StatefulWidget {
+  final String token;
+  const _TransporterProfileSheet({required this.token});
+
+  @override
+  State<_TransporterProfileSheet> createState() =>
+      _TransporterProfileSheetState();
+}
+
+class _TransporterProfileSheetState extends State<_TransporterProfileSheet> {
+  Map<String, dynamic>? profile;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    try {
+      final res = await AuthService().getProfile(widget.token);
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        setState(() {
+          profile = body['data'];
+          loading = false;
+        });
+      } else {
+        setState(() => loading = false);
+      }
+    } catch (_) {
+      setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade300,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: AppColors.buttonGreen,
+            child: Text(
+              loading || profile == null
+                  ? '?'
+                  : (profile!['name'] as String? ?? '?')[0].toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          if (loading)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: CircularProgressIndicator(),
+            )
+          else if (profile == null)
+            const Text('Could not load profile')
+          else ...[
+            Text(
+              profile!['name'] ?? '—',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              profile!['role']?['name'] ?? '—',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            ),
+            const SizedBox(height: 24),
+            const Divider(),
+            const SizedBox(height: 8),
+            _profileRow(Icons.email_outlined, 'Email', profile!['email']),
+            _profileRow(Icons.phone_outlined, 'Phone', profile!['phone']),
+            _profileRow(Icons.location_on_outlined, 'Location', profile!['location']),
+            _profileRow(
+              Icons.calendar_today_outlined,
+              'Joined',
+              profile!['createdAt'] != null
+                  ? profile!['createdAt'].toString().substring(0, 10)
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Get.back();
+                  Get.put(AuthController()).logout();
+                },
+                icon: const Icon(Icons.logout, size: 18, color: Colors.red),
+                label: const Text('Logout', style: TextStyle(color: Colors.red)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _profileRow(IconData icon, String label, String? value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.buttonGreen),
+          const SizedBox(width: 12),
+          Text(
+            '$label:',
+            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value ?? 'Not set',
+              style: TextStyle(
+                fontSize: 13,
+                color: value != null ? Colors.black87 : Colors.grey.shade400,
+              ),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
