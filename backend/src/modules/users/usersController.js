@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { registerUser, findUserByEmail, getUserProfile, updateUserProfile } = require("./usersService");
+const { registerUser, findUserByEmail, getUserProfile, updateUserProfile, setOnlineStatus } = require("./usersService");
 const { generateToken } = require("../../shared/utils/jwt");
 
 async function register(req, res) {
@@ -52,4 +52,17 @@ async function updateProfile(req, res) {
   }
 }
 
-module.exports = { register, login, getProfile, updateProfile };
+async function updateOnlineStatus(req, res) {
+  try {
+    const { isOnline } = req.body;
+    if (typeof isOnline !== "boolean") {
+      return res.status(400).json({ error: "isOnline must be a boolean" });
+    }
+    const result = await setOnlineStatus(req.user.userId, isOnline);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { register, login, getProfile, updateProfile, updateOnlineStatus };

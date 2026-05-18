@@ -1,5 +1,5 @@
 const express = require("express");
-const { register, login, getProfile, updateProfile } = require("./usersController");
+const { register, login, getProfile, updateProfile, updateOnlineStatus } = require("./usersController");
 const auth = require("../../shared/middleware/auth");
 
 const router = express.Router();
@@ -97,5 +97,27 @@ router.get("/profile", auth, getProfile);
  *         description: Profile updated successfully
  */
 router.patch("/profile", auth, updateProfile);
+
+/**
+ * @swagger
+ * /api/users/online-status:
+ *   patch:
+ *     tags: [Users]
+ *     summary: Set online/offline status
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [isOnline]
+ *             properties:
+ *               isOnline:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Online status updated
+ */
+router.patch("/online-status", auth, updateOnlineStatus);
 
 module.exports = router;

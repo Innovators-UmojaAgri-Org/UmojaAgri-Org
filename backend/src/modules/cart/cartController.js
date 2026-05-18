@@ -3,8 +3,11 @@ const cartService = require("./cartService");
 async function getCart(req, res) {
   try {
     const items = await cartService.getCart(req.user.userId);
-    const count = items.length;
-    res.json({ success: true, count, data: items });
+    const total = items.reduce(
+      (sum, item) => sum + item.quantity * (item.produce?.pricePerUnit || 0),
+      0
+    );
+    res.json({ success: true, count: items.length, total, data: items });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

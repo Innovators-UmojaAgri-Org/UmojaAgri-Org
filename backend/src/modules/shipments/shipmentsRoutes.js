@@ -9,6 +9,9 @@ const {
   getShipment,
   selectTransporter,
   getRecommendedTransporter,
+  listAvailableShipments,
+  acceptShipment,
+  listTransporterShipments,
 } = require("./shipmentsController");
 
 /**
@@ -125,5 +128,47 @@ router.get("/:shipmentId/recommendations", auth, role(["FARMER"]), getRecommende
  *         description: Transporter assigned
  */
 router.post("/select-transporter", auth, role(["FARMER"]), selectTransporter);
+
+/**
+ * @swagger
+ * /api/shipments/available:
+ *   get:
+ *     tags: [Shipments]
+ *     summary: List available (unassigned) shipments for transporters to accept
+ *     responses:
+ *       200:
+ *         description: Available shipments
+ */
+router.get("/available", auth, role(["TRANSPORTER"]), listAvailableShipments);
+
+/**
+ * @swagger
+ * /api/shipments/my:
+ *   get:
+ *     tags: [Shipments]
+ *     summary: List shipments assigned to this transporter
+ *     responses:
+ *       200:
+ *         description: Transporter's assigned shipments
+ */
+router.get("/my", auth, role(["TRANSPORTER"]), listTransporterShipments);
+
+/**
+ * @swagger
+ * /api/shipments/{id}/accept:
+ *   patch:
+ *     tags: [Shipments]
+ *     summary: Accept a shipment (Transporter)
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Shipment accepted
+ */
+router.patch("/:id/accept", auth, role(["TRANSPORTER"]), acceptShipment);
 
 module.exports = router;

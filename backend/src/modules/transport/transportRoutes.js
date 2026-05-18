@@ -4,6 +4,18 @@ const controller = require("./transportController");
 
 /**
  * @swagger
+ * /api/transport/vehicle-types:
+ *   get:
+ *     tags: [Transport]
+ *     summary: List all available vehicle types
+ *     responses:
+ *       200:
+ *         description: List of vehicle types with labels
+ */
+router.get("/vehicle-types", controller.listVehicleTypes);
+
+/**
+ * @swagger
  * /api/transport/assign:
  *   post:
  *     tags: [Transport]

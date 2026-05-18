@@ -6,7 +6,9 @@ const {
   getTransactions,
   fundWallet,
   makePayment,
+  getTransporterSummary,
 } = require("./financeController");
+const role = require("../../shared/middleware/role");
 
 /**
  * @swagger
@@ -77,5 +79,17 @@ router.post("/fund", auth, fundWallet);
  *         description: Payment processed
  */
 router.post("/pay", auth, makePayment);
+
+/**
+ * @swagger
+ * /api/finance/transporter-summary:
+ *   get:
+ *     tags: [Finance]
+ *     summary: Get transporter earnings and trips summary for this month
+ *     responses:
+ *       200:
+ *         description: Earnings and trips summary
+ */
+router.get("/transporter-summary", auth, role(["TRANSPORTER"]), getTransporterSummary);
 
 module.exports = router;

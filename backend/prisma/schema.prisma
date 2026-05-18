@@ -21,6 +21,7 @@ model User {
   phone     String?
   roleId    String
   role      Role     @relation(fields: [roleId], references: [id])
+  isOnline  Boolean  @default(false)
   createdAt DateTime @default(now())
 
   produce              Produce[]
@@ -52,11 +53,12 @@ model StorageLocation {
 }
 
 model Produce {
-  id             String  @id @default(uuid())
+  id             String           @id @default(uuid())
   name           String
   description    String?
   quantity       Float
   unit           String?
+  category       ProduceCategory?
 
   pricePerUnit   Float @default(0)
   freshnessScore Float?
@@ -96,6 +98,9 @@ model Order {
   amount   Float @default(0)
 
   status OrderStatus @default(PENDING)
+
+  vehicleTypePreference VehicleType?
+  deliveryAddress       String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -140,10 +145,10 @@ model DeliveryEvent {
 }
 
 model Vehicle {
-  id          String  @id @default(uuid())
-  plateNumber String  @unique
+  id          String      @id @default(uuid())
+  plateNumber String      @unique
   capacity    Float
-  type        String?
+  type        VehicleType?
 
   assignments TransportAssignment[]
 }
@@ -373,4 +378,20 @@ enum AIType {
   CARGO_RISK
   SUPPLY_INSIGHT
   SHIPMENT_INSIGHT
+}
+
+enum ProduceCategory {
+  TUBERS
+  VEGETABLES
+  CEREALS_GRAINS
+  LEGUMES_PULSES
+  FRUITS
+}
+
+enum VehicleType {
+  COMPACT_CAR_HATCHBACK
+  MINI_VAN
+  OPEN_TRUCK
+  REFRIGERATED_TRUCK
+  DEDICATED_BULK_HAULAGE
 }

@@ -9,6 +9,7 @@ const {
   removeProduce,
   listAllProduces,
   listMarketplaceProduces,
+  listFarmerWithProduce,
 } = require("./produceController");
 
 const router = express.Router();
@@ -148,5 +149,23 @@ router.get(
   role(["ADMIN", "FARMER", "TRANSPORTER"]),
   listAllProduces,
 );
+
+/**
+ * @swagger
+ * /api/produces/farmer/{farmerId}:
+ *   get:
+ *     tags: [Produce]
+ *     summary: Get a farmer's profile and all their produce (Seller - for Place Order page)
+ *     parameters:
+ *       - in: path
+ *         name: farmerId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Farmer profile with produce list
+ */
+router.get("/farmer/:farmerId", auth, role(["SELLER"]), listFarmerWithProduce);
 
 module.exports = router;

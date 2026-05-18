@@ -24,7 +24,7 @@ async function findUserByEmail(email) {
 }
 
 async function getUserProfile(userId) {
-  return prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       id: true,
@@ -32,9 +32,52 @@ async function getUserProfile(userId) {
       name: true,
       location: true,
       phone: true,
+      isOnline: true,
       role: { select: { name: true } },
       createdAt: true,
+      produce: { select: { id: true } },
+      sellerOrders: { select: { id: true } },
+      transporterProfile: { select: { rating: true, companyName: true, vehicleType: true } },
+      driverProfile: { select: { rating: true, licenseNumber: true } },
     },
+  });
+
+  if (!user) return null;
+
+  const role = user.role?.name;
+  let rating = null;
+  let listingsCount = 0;
+
+  if (role === "FARMER") {
+    listingsCount = user.produce.length;
+  } else if (role === "SELLER") {
+    listingsCount = user.sellerOrders.length;
+    rating = null;
+  } else if (role === "TRANSPORTER") {
+    rating = user.transporterProfile?.rating ?? user.driverProfile?.rating ?? null;
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    location: user.location,
+    phone: user.phone,
+    isOnline: user.isOnline,
+    role: role,
+    rating,
+    listingsCount,
+    transporterProfile: user.transporterProfile || null,
+    driverProfile: user.driverProfile || null,
+    createdAt: user.createdAt,
+  };
+}
+
+async function setOnlineStatus(userId, isOnline) {
+  return prisma.user.update({
+    where: { id: userId },
+    data: { isOnline },
+    select: { id: true, isOnline: true },
   });
 }
 
@@ -62,4 +105,5 @@ module.exports = {
   findUserByEmail,
   getUserProfile,
   updateUserProfile,
+  setOnlineStatus,
 };

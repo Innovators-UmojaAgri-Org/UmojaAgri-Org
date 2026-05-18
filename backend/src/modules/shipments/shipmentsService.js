@@ -134,6 +134,62 @@ async function getRecommendedTransporter(shipmentId) {
   };
 }
 
+// Transporters browse all unassigned pending shipments
+async function getAvailableShipments() {
+  return prisma.shipment.findMany({
+    where: { status: "PENDING", transporterId: null },
+    include: {
+      farmer: { select: { id: true, name: true, location: true } },
+      route: {
+        select: {
+          origin: true,
+          destination: true,
+          distanceKm: true,
+          estimatedTimeMinutes: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// Transporter accepts a shipment
+async function acceptShipment(shipmentId, transporterId) {
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.status !== "PENDING" || shipment.transporterId) {
+    throw new Error("Shipment is no longer available");
+  }
+
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { transporterId, status: "TRANSPORTER_ASSIGNED" },
+    include: {
+      farmer: { select: { id: true, name: true } },
+      route: { select: { origin: true, destination: true } },
+    },
+  });
+}
+
+// Transporter's own shipments (assigned to them)
+async function getShipmentsByTransporter(transporterId) {
+  return prisma.shipment.findMany({
+    where: { transporterId },
+    include: {
+      farmer: { select: { id: true, name: true, location: true } },
+      route: {
+        select: {
+          origin: true,
+          destination: true,
+          distanceKm: true,
+          estimatedTimeMinutes: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 module.exports = {
   createShipment,
   getShipmentsByFarmer,
@@ -141,4 +197,7 @@ module.exports = {
   getShipmentById,
   selectTransporter,
   getRecommendedTransporter,
+  getAvailableShipments,
+  acceptShipment,
+  getShipmentsByTransporter,
 };

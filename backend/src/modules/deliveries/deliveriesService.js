@@ -119,52 +119,40 @@ async function updateDeliveryStatus(id, status, location = "SYSTEM", io = null) 
   return delivery;
 }
 
-async function getIncomingDeliveries(sellerId) {
-  return prisma.delivery.findMany({
-    where: {
-      order: {
-        sellerId: sellerId,
-      },
-    },
+async function getIncomingDeliveries(sellerId, { limit, page } = {}) {
+  const take = limit ? parseInt(limit) : undefined;
+  const skip = take && page ? (parseInt(page) - 1) * take : undefined;
 
-    include: {
-      produce: {
-        select: {
-          name: true,
+  const where = { order: { sellerId } };
+
+  const [deliveries, total] = await prisma.$transaction([
+    prisma.delivery.findMany({
+      where,
+      take,
+      skip,
+      include: {
+        produce: { select: { name: true, imageUrl: true } },
+        order: {
+          select: {
+            id: true,
+            quantity: true,
+            unit: true,
+            amount: true,
+            farmer: { select: { id: true, name: true, location: true } },
+          },
         },
-      },
-
-      order: {
-        select: {
-          id: true,
-          quantity: true,
-          unit: true,
-          farmer: {
-            select: {
-              id: true,
-              name: true,
-              location: true,
-            },
+        transport: {
+          include: {
+            transporter: { select: { id: true, name: true } },
           },
         },
       },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.delivery.count({ where }),
+  ]);
 
-      transport: {
-        include: {
-          transporter: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-        },
-      },
-    },
-
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  return { deliveries, total };
 }
 
 module.exports = {

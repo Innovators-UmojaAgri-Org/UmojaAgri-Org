@@ -1,5 +1,32 @@
 const shipmentsService = require("./shipmentsService");
 
+async function listAvailableShipments(req, res) {
+  try {
+    const shipments = await shipmentsService.getAvailableShipments();
+    res.json({ success: true, count: shipments.length, data: shipments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+async function acceptShipment(req, res) {
+  try {
+    const shipment = await shipmentsService.acceptShipment(req.params.id, req.user.userId);
+    res.json({ success: true, data: shipment, message: "Shipment accepted" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function listTransporterShipments(req, res) {
+  try {
+    const shipments = await shipmentsService.getShipmentsByTransporter(req.user.userId);
+    res.json({ success: true, count: shipments.length, data: shipments });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
 async function createShipment(req, res) {
   try {
     const data = { ...req.body, farmerId: req.user.userId };
@@ -73,4 +100,7 @@ module.exports = {
   getShipment,
   selectTransporter,
   getRecommendedTransporter,
+  listAvailableShipments,
+  acceptShipment,
+  listTransporterShipments,
 };
