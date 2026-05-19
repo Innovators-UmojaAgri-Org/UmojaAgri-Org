@@ -190,6 +190,31 @@ async function getShipmentsByTransporter(transporterId) {
   });
 }
 
+// Transporter declines a shipment that was assigned to them by a farmer
+async function declineShipment(shipmentId, transporterId) {
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.transporterId !== transporterId) throw new Error("Not authorized");
+  if (shipment.status !== "TRANSPORTER_ASSIGNED") throw new Error("Shipment cannot be declined at this stage");
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { status: "PENDING", transporterId: null },
+  });
+}
+
+// Transporter updates delivery status (IN_TRANSIT or DELIVERED)
+async function updateShipmentStatusByTransporter(shipmentId, transporterId, status) {
+  const allowed = ["IN_TRANSIT", "DELIVERED"];
+  if (!allowed.includes(status)) throw new Error("Invalid status. Use IN_TRANSIT or DELIVERED");
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.transporterId !== transporterId) throw new Error("Not authorized");
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { status },
+  });
+}
+
 module.exports = {
   createShipment,
   getShipmentsByFarmer,
@@ -200,4 +225,6 @@ module.exports = {
   getAvailableShipments,
   acceptShipment,
   getShipmentsByTransporter,
+  declineShipment,
+  updateShipmentStatusByTransporter,
 };

@@ -93,6 +93,29 @@ async function getRecommendedTransporter(req, res) {
   }
 }
 
+async function declineShipment(req, res) {
+  try {
+    const shipment = await shipmentsService.declineShipment(req.params.id, req.user.userId);
+    res.json({ success: true, data: shipment, message: "Shipment declined" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function updateShipmentStatus(req, res) {
+  try {
+    const { status } = req.body;
+    const shipment = await shipmentsService.updateShipmentStatusByTransporter(
+      req.params.id,
+      req.user.userId,
+      status
+    );
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
 module.exports = {
   createShipment,
   listShipments,
@@ -103,4 +126,6 @@ module.exports = {
   listAvailableShipments,
   acceptShipment,
   listTransporterShipments,
+  declineShipment,
+  updateShipmentStatus,
 };

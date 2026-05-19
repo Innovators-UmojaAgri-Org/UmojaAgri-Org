@@ -12,6 +12,8 @@ const {
   listAvailableShipments,
   acceptShipment,
   listTransporterShipments,
+  declineShipment,
+  updateShipmentStatus,
 } = require("./shipmentsController");
 
 /**
@@ -170,5 +172,7 @@ router.get("/my", auth, role(["TRANSPORTER"]), listTransporterShipments);
  *         description: Shipment accepted
  */
 router.patch("/:id/accept", auth, role(["TRANSPORTER"]), acceptShipment);
+router.patch("/:id/decline", auth, role(["TRANSPORTER"]), declineShipment);
+router.patch("/:id/status", auth, role(["TRANSPORTER"]), updateShipmentStatus);
 
 module.exports = router;
