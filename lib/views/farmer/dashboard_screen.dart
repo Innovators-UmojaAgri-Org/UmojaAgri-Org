@@ -669,7 +669,7 @@ class _ProfileSheetState extends State<_ProfileSheet> {
             ),
             const SizedBox(height: 4),
             Text(
-              profile!['role']?['name'] ?? '—',
+              _roleLabel(profile!['role']) ?? '—',
               style: TextStyle(
                 fontSize: 13,
                 color: Colors.grey.shade500,
@@ -714,6 +714,12 @@ class _ProfileSheetState extends State<_ProfileSheet> {
         ],
       ),
     );
+  }
+
+  String? _roleLabel(dynamic role) {
+    if (role is String) return role;
+    if (role is Map && role['name'] is String) return role['name'] as String;
+    return null;
   }
 
   Widget _profileRow(IconData icon, String label, String? value) {
