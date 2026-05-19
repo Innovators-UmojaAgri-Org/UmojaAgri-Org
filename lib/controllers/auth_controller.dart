@@ -83,7 +83,14 @@ class AuthController extends GetxController {
         if (profileRes.statusCode == 200) {
           final profileBody = jsonDecode(profileRes.body);
           final userData = profileBody['data'];
-          roleId = userData['role']['name'] ?? RoleIds.farmer;
+          final rawRole = userData['role'];
+          if (rawRole is String) {
+            roleId = rawRole;
+          } else if (rawRole is Map && rawRole['name'] is String) {
+            roleId = rawRole['name'];
+          } else {
+            roleId = RoleIds.farmer;
+          }
           userName = userData['name'] ?? '';
           userId = userData['id'] ?? '';
         }
