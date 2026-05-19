@@ -27,9 +27,12 @@ async function getProducesByFarmer(farmerId) {
 }
 
 async function updateProduce(id, data, farmerId) {
+  const cleaned = { ...data };
+  if (cleaned.harvestDate) cleaned.harvestDate = new Date(cleaned.harvestDate);
+  if (cleaned.expiryDate) cleaned.expiryDate = new Date(cleaned.expiryDate);
   return prisma.produce.updateMany({
     where: { id, farmerId },
-    data,
+    data: cleaned,
   });
 }
 

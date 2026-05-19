@@ -65,7 +65,6 @@ async function getShipmentSummary(farmerId) {
   const activeStatuses = ["PENDING", "TRANSPORTER_ASSIGNED", "PICKED_UP", "IN_TRANSIT"];
   const activeShipments = shipments.filter((s) => activeStatuses.includes(s.status));
 
-  // Count unique routes
   const routeIds = new Set(shipments.filter((s) => s.routeId).map((s) => s.routeId));
 
   return {
@@ -115,8 +114,7 @@ async function selectTransporter(shipmentId, transporterId) {
   });
 }
 
-async function getRecommendedTransporter(shipmentId) {
-  // Find transporter with highest rating and recommend based on that just for now 
+async function getRecommendedTransporter() {
   const transporter = await prisma.transporterProfile.findFirst({
     orderBy: { rating: "desc" },
     include: {
@@ -153,7 +151,7 @@ async function getAvailableShipments() {
   });
 }
 
-// Transporter accepts a shipment
+// Transporter self-assigns from the available pool (PENDING → TRANSPORTER_ASSIGNED)
 async function acceptShipment(shipmentId, transporterId) {
   const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
   if (!shipment) throw new Error("Shipment not found");
@@ -171,7 +169,7 @@ async function acceptShipment(shipmentId, transporterId) {
   });
 }
 
-// Transporter's own shipments (assigned to them)
+// Transporter's own assigned shipments
 async function getShipmentsByTransporter(transporterId) {
   return prisma.shipment.findMany({
     where: { transporterId },
@@ -190,7 +188,7 @@ async function getShipmentsByTransporter(transporterId) {
   });
 }
 
-// Transporter declines a shipment that was assigned to them by a farmer
+// Transporter declines a farmer-assigned shipment (TRANSPORTER_ASSIGNED → PENDING)
 async function declineShipment(shipmentId, transporterId) {
   const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
   if (!shipment) throw new Error("Shipment not found");
@@ -202,7 +200,7 @@ async function declineShipment(shipmentId, transporterId) {
   });
 }
 
-// Transporter updates delivery status (IN_TRANSIT or DELIVERED)
+// Transporter updates delivery progress (IN_TRANSIT or DELIVERED)
 async function updateShipmentStatusByTransporter(shipmentId, transporterId, status) {
   const allowed = ["IN_TRANSIT", "DELIVERED"];
   if (!allowed.includes(status)) throw new Error("Invalid status. Use IN_TRANSIT or DELIVERED");

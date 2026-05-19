@@ -1,6 +1,6 @@
 const shipmentsService = require("./shipmentsService");
 
-async function listAvailableShipments(req, res) {
+async function listAvailableShipments(_req, res) {
   try {
     const shipments = await shipmentsService.getAvailableShipments();
     res.json({ success: true, count: shipments.length, data: shipments });
@@ -24,6 +24,29 @@ async function listTransporterShipments(req, res) {
     res.json({ success: true, count: shipments.length, data: shipments });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+}
+
+async function declineShipment(req, res) {
+  try {
+    const shipment = await shipmentsService.declineShipment(req.params.id, req.user.userId);
+    res.json({ success: true, data: shipment, message: "Shipment declined" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+async function updateShipmentStatus(req, res) {
+  try {
+    const { status } = req.body;
+    const shipment = await shipmentsService.updateShipmentStatusByTransporter(
+      req.params.id,
+      req.user.userId,
+      status
+    );
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 }
 
@@ -69,50 +92,21 @@ async function selectTransporter(req, res) {
   try {
     const { shipmentId, transporterId } = req.body;
     const shipment = await shipmentsService.selectTransporter(shipmentId, transporterId);
-    res.json({
-      success: true,
-      data: shipment,
-      message: "Transporter selected",
-    });
+    res.json({ success: true, data: shipment, message: "Transporter selected" });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
 }
 
-async function getRecommendedTransporter(req, res) {
+async function getRecommendedTransporter(_req, res) {
   try {
-    const recommendation = await shipmentsService.getRecommendedTransporter(
-      req.params.shipmentId
-    );
+    const recommendation = await shipmentsService.getRecommendedTransporter();
     if (!recommendation) {
       return res.status(404).json({ error: "No transporters available" });
     }
     res.json({ success: true, data: recommendation });
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-}
-
-async function declineShipment(req, res) {
-  try {
-    const shipment = await shipmentsService.declineShipment(req.params.id, req.user.userId);
-    res.json({ success: true, data: shipment, message: "Shipment declined" });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-}
-
-async function updateShipmentStatus(req, res) {
-  try {
-    const { status } = req.body;
-    const shipment = await shipmentsService.updateShipmentStatusByTransporter(
-      req.params.id,
-      req.user.userId,
-      status
-    );
-    res.json({ success: true, data: shipment });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
   }
 }
 
