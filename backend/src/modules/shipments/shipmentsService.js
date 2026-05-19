@@ -65,7 +65,6 @@ async function getShipmentSummary(farmerId) {
   const activeStatuses = ["PENDING", "TRANSPORTER_ASSIGNED", "PICKED_UP", "IN_TRANSIT"];
   const activeShipments = shipments.filter((s) => activeStatuses.includes(s.status));
 
-  // Count unique routes
   const routeIds = new Set(shipments.filter((s) => s.routeId).map((s) => s.routeId));
 
   return {
@@ -115,8 +114,7 @@ async function selectTransporter(shipmentId, transporterId) {
   });
 }
 
-async function getRecommendedTransporter(shipmentId) {
-  // Find transporter with highest rating and recommend based on that just for now 
+async function getRecommendedTransporter() {
   const transporter = await prisma.transporterProfile.findFirst({
     orderBy: { rating: "desc" },
     include: {
@@ -134,47 +132,81 @@ async function getRecommendedTransporter(shipmentId) {
   };
 }
 
+// Transporters browse all unassigned pending shipments
+async function getAvailableShipments() {
+  return prisma.shipment.findMany({
+    where: { status: "PENDING", transporterId: null },
+    include: {
+      farmer: { select: { id: true, name: true, location: true } },
+      route: {
+        select: {
+          origin: true,
+          destination: true,
+          distanceKm: true,
+          estimatedTimeMinutes: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// Transporter self-assigns from the available pool (PENDING → TRANSPORTER_ASSIGNED)
+async function acceptShipment(shipmentId, transporterId) {
+  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.status !== "PENDING" || shipment.transporterId) {
+    throw new Error("Shipment is no longer available");
+  }
+
+  return prisma.shipment.update({
+    where: { id: shipmentId },
+    data: { transporterId, status: "TRANSPORTER_ASSIGNED" },
+    include: {
+      farmer: { select: { id: true, name: true } },
+      route: { select: { origin: true, destination: true } },
+    },
+  });
+}
+
+// Transporter's own assigned shipments
 async function getShipmentsByTransporter(transporterId) {
   return prisma.shipment.findMany({
     where: { transporterId },
     include: {
       farmer: { select: { id: true, name: true, location: true } },
       route: {
-        select: { origin: true, destination: true, distanceKm: true, estimatedTimeMinutes: true },
+        select: {
+          origin: true,
+          destination: true,
+          distanceKm: true,
+          estimatedTimeMinutes: true,
+        },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: "desc" },
   });
 }
 
-async function acceptShipment(shipmentId, transporterId) {
-  const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
-  if (!shipment) throw new Error('Shipment not found');
-  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
-  if (shipment.status !== 'TRANSPORTER_ASSIGNED') throw new Error('Shipment is not awaiting acceptance');
-  return prisma.shipment.update({
-    where: { id: shipmentId },
-    data: { status: 'PICKED_UP' },
-  });
-}
-
+// Transporter declines a farmer-assigned shipment (TRANSPORTER_ASSIGNED → PENDING)
 async function declineShipment(shipmentId, transporterId) {
   const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
-  if (!shipment) throw new Error('Shipment not found');
-  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
-  if (shipment.status !== 'TRANSPORTER_ASSIGNED') throw new Error('Shipment cannot be declined at this stage');
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.transporterId !== transporterId) throw new Error("Not authorized");
+  if (shipment.status !== "TRANSPORTER_ASSIGNED") throw new Error("Shipment cannot be declined at this stage");
   return prisma.shipment.update({
     where: { id: shipmentId },
-    data: { status: 'PENDING', transporterId: null },
+    data: { status: "PENDING", transporterId: null },
   });
 }
 
+// Transporter updates delivery progress (IN_TRANSIT or DELIVERED)
 async function updateShipmentStatusByTransporter(shipmentId, transporterId, status) {
-  const allowed = ['IN_TRANSIT', 'DELIVERED'];
-  if (!allowed.includes(status)) throw new Error('Invalid status');
+  const allowed = ["IN_TRANSIT", "DELIVERED"];
+  if (!allowed.includes(status)) throw new Error("Invalid status. Use IN_TRANSIT or DELIVERED");
   const shipment = await prisma.shipment.findUnique({ where: { id: shipmentId } });
-  if (!shipment) throw new Error('Shipment not found');
-  if (shipment.transporterId !== transporterId) throw new Error('Not authorized');
+  if (!shipment) throw new Error("Shipment not found");
+  if (shipment.transporterId !== transporterId) throw new Error("Not authorized");
   return prisma.shipment.update({
     where: { id: shipmentId },
     data: { status },
@@ -188,8 +220,9 @@ module.exports = {
   getShipmentById,
   selectTransporter,
   getRecommendedTransporter,
-  getShipmentsByTransporter,
+  getAvailableShipments,
   acceptShipment,
+  getShipmentsByTransporter,
   declineShipment,
   updateShipmentStatusByTransporter,
 };

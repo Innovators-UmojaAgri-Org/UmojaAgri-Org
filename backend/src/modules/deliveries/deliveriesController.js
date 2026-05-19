@@ -36,11 +36,17 @@ async function updateDeliveryStatus(req, res) {
 
 async function listIncomingDeliveries(req, res) {
   try {
-    const deliveries = await deliveryService.getIncomingDeliveries(req.user.userId);
+    const { limit, page } = req.query;
+    const { deliveries, total } = await deliveryService.getIncomingDeliveries(
+      req.user.userId,
+      { limit, page }
+    );
 
     res.json({
       success: true,
+      total,
       count: deliveries.length,
+      page: page ? parseInt(page) : 1,
       data: deliveries,
     });
 

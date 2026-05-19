@@ -15,7 +15,7 @@ async function generateOrderCode() {
 }
 
 // Seller places order
-async function createOrder({ produceId, sellerId, quantity, unit }) {
+async function createOrder({ produceId, sellerId, quantity, unit, vehicleTypePreference, deliveryAddress }) {
   const produce = await prisma.produce.findUnique({ where: { id: produceId } });
   if (!produce) throw new Error("Produce not found");
 
@@ -32,6 +32,8 @@ async function createOrder({ produceId, sellerId, quantity, unit }) {
       unit: unit || produce.unit || "kg",
       amount,
       status: "PENDING",
+      vehicleTypePreference: vehicleTypePreference || null,
+      deliveryAddress: deliveryAddress || null,
     },
   });
 }
@@ -54,7 +56,7 @@ async function updateOrderStatus(orderId, status) {
   const order = await prisma.order.update({
     where: { id: orderId },
     data: { status },
-    include: { produce: true },
+    include: { produce: true, delivery: true },
   });
 
   if (status === "CONFIRMED") {
@@ -70,6 +72,8 @@ async function updateOrderStatus(orderId, status) {
         produceId: order.produceId,
         storageId: storage.id,
         status: "PENDING",
+        origin: order.produce?.location || null,
+        destination: order.deliveryAddress || null,
       },
     });
 
@@ -87,7 +91,22 @@ async function updateOrderStatus(orderId, status) {
 async function getOrderById(id) {
   return prisma.order.findUnique({
     where: { id },
-    include: { produce: true, seller: true, farmer: true, delivery: true },
+    include: {
+      produce: true,
+      seller: { select: { id: true, name: true, email: true, phone: true } },
+      farmer: { select: { id: true, name: true, email: true, phone: true, location: true } },
+      delivery: {
+        include: {
+          transport: {
+            include: {
+              transporter: { select: { id: true, name: true, phone: true } },
+              vehicle: true,
+            },
+          },
+          events: { orderBy: { timestamp: "desc" } },
+        },
+      },
+    },
   });
 }
 

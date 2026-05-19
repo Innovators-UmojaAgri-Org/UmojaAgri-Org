@@ -101,9 +101,52 @@ async function makePayment({ payerId, recipientId, amount, description }) {
   return { success: true, amount };
 }
 
+async function getTransporterSummary(userId) {
+  const prisma = require("../../config/prisma");
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const wallet = await getWallet(userId);
+
+  // Sum all CREDIT transactions this month
+  const monthlyCredits = await prisma.transaction.aggregate({
+    where: {
+      walletId: wallet.id,
+      type: "CREDIT",
+      createdAt: { gte: startOfMonth },
+    },
+    _sum: { amount: true },
+  });
+
+  // Count completed shipments this month (trips)
+  const tripsThisMonth = await prisma.shipment.count({
+    where: {
+      transporterId: userId,
+      status: "DELIVERED",
+      updatedAt: { gte: startOfMonth },
+    },
+  });
+
+  // Count in-progress shipments
+  const tripsInProgress = await prisma.shipment.count({
+    where: {
+      transporterId: userId,
+      status: { in: ["TRANSPORTER_ASSIGNED", "PICKED_UP", "IN_TRANSIT"] },
+    },
+  });
+
+  return {
+    earnedThisMonth: monthlyCredits._sum.amount || 0,
+    tripsThisMonth,
+    tripsInProgress,
+    walletBalance: wallet.balance,
+  };
+}
+
 module.exports = {
   getWallet,
   getTransactions,
   createTransaction,
   makePayment,
+  getTransporterSummary,
 };

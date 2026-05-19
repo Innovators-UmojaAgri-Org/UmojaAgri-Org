@@ -46,4 +46,13 @@ async function makePayment(req, res) {
   }
 }
 
-module.exports = { getWallet, getTransactions, fundWallet, makePayment };
+async function getTransporterSummary(req, res) {
+  try {
+    const summary = await financeService.getTransporterSummary(req.user.userId);
+    res.json({ success: true, data: summary });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+}
+
+module.exports = { getWallet, getTransactions, fundWallet, makePayment, getTransporterSummary };
